@@ -203,7 +203,7 @@ export default function InputView({ onPredictionComplete, initialData }) {
       )}
 
       <form onSubmit={handleSubmit} className="input-form">
-        {/* Student Information Section */}
+        {/* Student Information Section
         <div className="glass-card section-card">
           <div className="section-header">
             <User size={18} className="text-cyan" />
@@ -293,12 +293,12 @@ export default function InputView({ onPredictionComplete, initialData }) {
               />
             </div>
           </div>
-          
-          <div className="cohort-note">
+           */}
+          {/* <div className="cohort-note">
             <Sparkles size={14} className="text-cyan" />
             <span>Academic Cohort mapped for ML model: <strong>{student.year}-{student.semester}</strong>. (Department is student profile data and is never passed into the ML feature matrix).</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Dynamic Subject Attendance Section */}
         <div className="glass-card section-card">
