@@ -1,4 +1,3 @@
-```js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -10,10 +9,6 @@ dotenv.config();
 
 const app = express();
 
-// ===============================
-// CORS
-// ===============================
-
 app.use(
   cors({
     origin: '*',
@@ -22,23 +17,10 @@ app.use(
   })
 );
 
-// ===============================
-// JSON BODY PARSER
-// ===============================
-
 app.use(express.json());
 
-// ===============================
-// API ROUTES
-// ===============================
-
 app.use('/api', predictionRoutes);
-
 app.use('/api/ai', aiRoutes);
-
-// ===============================
-// BASE ROUTE
-// ===============================
 
 app.get('/', (req, res) => {
   res.json({
@@ -55,10 +37,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// ===============================
-// GLOBAL ERROR HANDLER
-// ===============================
-
 app.use((err, req, res, next) => {
   console.error('Unhandled server error:', err);
 
@@ -68,9 +46,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ===============================
-// VERCEL
-// ===============================
-
 export default app;
-```
