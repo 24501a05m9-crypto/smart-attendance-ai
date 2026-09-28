@@ -1,3 +1,4 @@
+```js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -8,26 +9,31 @@ import aiRoutes from './routes/aiRoutes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Enable CORS for frontend
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// ===============================
+// CORS
+// ===============================
 
-// Parse JSON request bodies
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+);
+
+// ===============================
+// JSON BODY PARSER
+// ===============================
+
 app.use(express.json());
 
 // ===============================
 // API ROUTES
 // ===============================
 
-// Existing prediction / ML routes
 app.use('/api', predictionRoutes);
 
-// New Synapse AI routes
 app.use('/api/ai', aiRoutes);
 
 // ===============================
@@ -63,22 +69,8 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================
-// START SERVER
+// VERCEL
 // ===============================
 
-app.listen(PORT, () => {
-  console.log(
-    `[Smart Attendance AI] Node.js Express server running on http://localhost:${PORT}`
-  );
-
-  console.log(
-    `[Smart Attendance AI] Forwarding ML requests to ${
-      process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000'
-    }`
-  );
-
-  console.log(
-    '[Smart Attendance AI] Synapse AI endpoint available at http://localhost:' +
-      `${PORT}/api/ai/chat`
-  );
-});
+export default app;
+```
