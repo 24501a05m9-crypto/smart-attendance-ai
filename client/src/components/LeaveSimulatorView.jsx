@@ -1,452 +1,700 @@
-import React, { useState } from 'react';
-import { 
-  Sparkles, 
-  AlertTriangle, 
-  ShieldCheck, 
-  AlertOctagon, 
-  HelpCircle, 
-  ArrowRight, 
-  RefreshCw, 
-  Sliders, 
-  Info,
-  CalendarX 
+import React, { useMemo, useState } from 'react';
+import {
+  CalendarX,
+  Play,
+  ArrowLeft,
+  ShieldCheck,
+  AlertTriangle,
+  AlertOctagon,
+  TrendingDown,
+  TrendingUp
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ReferenceLine 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine
 } from 'recharts';
+
 import { simulateLeave } from '../services/api';
 
-export default function LeaveSimulatorView({ student, subjects, currentPrediction, onGoToInput }) {
+export default function LeaveSimulatorView({
+  student,
+  subjects,
+  currentPrediction,
+  onGoToInput
+}) {
   const [classesToMiss, setClassesToMiss] = useState(3);
   const [loading, setLoading] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  if (!subjects || subjects.length === 0) {
-    return (
-      <div className="glass-card text-center p-8">
-        <h3>No Attendance Data Entered</h3>
-        <p className="text-muted mt-2">Please enter your subject attendance first to run the leave impact simulator.</p>
-        <button className="btn-primary mt-4" onClick={onGoToInput}>
-          Enter Attendance Details
-        </button>
-      </div>
-    );
-  }
+  const activeSim =
+    simulationData ||
+    currentPrediction?.leave_trajectory ||
+    null;
 
-  // Run simulation
-  const handleSimulate = async (missCount) => {
-    setLoading(true);
-    setErrorMsg('');
+  const handleSimulate = async (missCount = classesToMiss) => {
+    if (!subjects || subjects.length === 0) {
+      setErrorMsg('Please enter attendance details first.');
+      return;
+    }
+
     try {
-      const count = Number(missCount);
-      const res = await simulateLeave(student, subjects, count);
-      setSimulationData(res);
-    } catch (err) {
-      console.error('Leave simulation failed:', err);
-      setErrorMsg(err.message || 'Leave simulation failed. Please try again.');
+      setLoading(true);
+      setErrorMsg('');
+
+      const result = await simulateLeave(
+        student || {},
+        subjects || [],
+        missCount
+      );
+
+      setSimulationData(result);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(
+        error?.message ||
+        'Unable to simulate leave right now.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Trigger initial simulation or load from currentPrediction trajectory
-  const activeSim = simulationData || (currentPrediction?.leave_trajectory ? {
-    current_attendance: currentPrediction.current_attendance,
-    classes_missed: classesToMiss,
-    attendance_after_leave: currentPrediction.leave_trajectory.find(t => t.classes_missed === classesToMiss)?.attendance_after_leave || 67.44,
-    predicted_future_attendance: currentPrediction.leave_trajectory.find(t => t.classes_missed === classesToMiss)?.predicted_future_attendance || 74.2,
-    risk_level: currentPrediction.leave_trajectory.find(t => t.classes_missed === classesToMiss)?.risk_level || 'At Risk',
-    maximum_safe_leave: currentPrediction.maximum_safe_leave,
-    max_safe_leave_message: currentPrediction.max_safe_leave_message,
-    trajectory: currentPrediction.leave_trajectory
-  } : null);
+  const trajectory = useMemo(() => {
+    const data =
+      activeSim?.trajectory ||
+      activeSim?.data ||
+      [];
 
-  const trajectoryChartData = (activeSim?.trajectory || []).map(item => ({
-    missed: `${item.classes_missed}`,
-    missedNum: item.classes_missed,
-    predicted: item.predicted_future_attendance,
-    immediate: item.attendance_after_leave
-  }));
+    if (!Array.isArray(data)) return [];
 
-  const getRiskBadge = (risk) => {
-    switch (risk) {
-      case 'Safe':
-        return (
-          <span className="badge badge-safe">
-            <ShieldCheck size={14} />
-            <span>Safe (≥ 75%)</span>
-          </span>
-        );
-      case 'At Risk':
-        return (
-          <span className="badge badge-risk">
-            <AlertTriangle size={14} />
-            <span>At Risk (65% - 74%)</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="badge badge-high-risk">
-            <AlertOctagon size={14} />
-            <span>High Risk (&lt; 65%)</span>
-          </span>
-        );
+    return data.map((item, index) => ({
+      classes: Number(
+        item?.classes_missed ??
+        item?.missed ??
+        item?.classes ??
+        index
+      ),
+      attendance: Number(
+        item?.attendance ??
+        item?.percentage ??
+        item?.overall_attendance ??
+        0
+      )
+    }));
+  }, [activeSim]);
+
+  const risk = String(
+    activeSim?.risk_level ||
+    activeSim?.risk ||
+    currentPrediction?.risk_level ||
+    'At Risk'
+  );
+
+  const finalAttendance = Number(
+    activeSim?.final_attendance ??
+    activeSim?.attendance ??
+    activeSim?.projected_attendance ??
+    0
+  );
+
+  const currentAttendance = Number(
+    currentPrediction?.current_attendance?.overall_attendance ??
+    currentPrediction?.current_attendance?.percentage ??
+    0
+  );
+
+  const safeLeave = Number(
+    currentPrediction?.maximum_safe_leave ??
+    activeSim?.maximum_safe_leave ??
+    0
+  );
+
+  const getRiskClass = () => {
+    const value = risk.toLowerCase();
+
+    if (value.includes('high')) return 'leave-risk-high';
+    if (value.includes('safe')) return 'leave-risk-safe';
+
+    return 'leave-risk-warning';
+  };
+
+  const getRiskIcon = () => {
+    const value = risk.toLowerCase();
+
+    if (value.includes('high')) {
+      return <AlertOctagon size={18} />;
     }
+
+    if (value.includes('safe')) {
+      return <ShieldCheck size={18} />;
+    }
+
+    return <AlertTriangle size={18} />;
   };
 
   return (
-    <div className="leave-simulator-container animate-fade-in">
-      <div className="view-header">
-        <div>
-          <h2>Leave Impact Simulator</h2>
-          <p className="view-subtitle">
-            "Can I Take Leave?" — Evaluate how missing upcoming classes alters your future attendance projection.
-          </p>
+    <div className="leave-page animate-fade-in">
+
+      <div className="leave-header">
+
+        <button
+          type="button"
+          className="leave-back-btn"
+          onClick={onGoToInput}
+        >
+          <ArrowLeft size={17} />
+          Edit Attendance
+        </button>
+
+        <div className="leave-title">
+          <div className="leave-title-icon">
+            <CalendarX size={22} />
+          </div>
+
+          <div>
+            <h1>Leave Simulator</h1>
+            <p>
+              See how missing classes could affect your attendance.
+            </p>
+          </div>
         </div>
+
       </div>
 
+
       {errorMsg && (
-        <div className="glass-card error-bar">
-          <AlertOctagon size={18} className="text-rose" />
-          <span>{errorMsg}</span>
+        <div className="leave-error">
+          <AlertTriangle size={18} />
+          {errorMsg}
         </div>
       )}
 
-      {/* Control Box */}
-      <div className="glass-card leave-control-card">
-        <div className="control-left">
-          <div className="control-label-group">
-            <span className="control-title">CAN I TAKE LEAVE?</span>
-            <span className="control-desc">Select how many upcoming classes you are planning to miss:</span>
-          </div>
 
-          <div className="slider-input-group">
-            <input 
-              type="range" 
-              min="0" 
-              max="15" 
+      <section className="leave-control-card">
+
+        <div>
+          <span className="leave-section-label">
+            Classes you plan to miss
+          </span>
+
+          <div className="leave-number-row">
+            <input
+              type="number"
+              min="0"
+              max="100"
               value={classesToMiss}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setClassesToMiss(val);
-                handleSimulate(val);
-              }}
-              className="leave-range-slider"
+              onChange={(e) =>
+                setClassesToMiss(
+                  Math.max(0, Number(e.target.value))
+                )
+              }
             />
-            
-            <div className="number-picker">
-              <span className="picker-label">Classes to miss:</span>
-              <input
-                type="number"
-                min="0"
-                max="20"
-                value={classesToMiss}
-                onChange={(e) => {
-                  const val = Math.max(0, Number(e.target.value));
-                  setClassesToMiss(val);
-                }}
-                className="form-input picker-input"
-              />
-              <button 
-                className="btn-primary btn-sm"
-                onClick={() => handleSimulate(classesToMiss)}
-                disabled={loading}
-              >
-                {loading ? <RefreshCw size={14} className="spin-icon" /> : 'Simulate Leave'}
-              </button>
-            </div>
+
+            <span>classes</span>
           </div>
         </div>
 
-        {/* Max Safe Leave Callout Box */}
-        <div className="max-safe-box">
-          <div className="safe-icon-row">
-            <ShieldCheck size={20} className="text-emerald" />
-            <span className="safe-box-label">MAXIMUM SAFE LEAVE</span>
+
+        <div className="leave-slider-wrap">
+
+          <input
+            type="range"
+            min="0"
+            max="20"
+            value={classesToMiss}
+            onChange={(e) =>
+              setClassesToMiss(Number(e.target.value))
+            }
+            className="leave-slider"
+          />
+
+          <div className="leave-slider-labels">
+            <span>0</span>
+            <span>10</span>
+            <span>20</span>
           </div>
-          <div className="safe-box-number">
-            {activeSim?.maximum_safe_leave ?? currentPrediction?.maximum_safe_leave ?? 0} <span className="classes-text">Classes</span>
-          </div>
-          <p className="safe-box-desc">
-            "Based on the model forecast." You can safely miss up to {activeSim?.maximum_safe_leave ?? currentPrediction?.maximum_safe_leave ?? 0} classes while keeping predicted future attendance &ge; 75%.
+
+        </div>
+
+
+        <button
+          type="button"
+          className="btn-primary leave-simulate-btn"
+          onClick={() => handleSimulate()}
+          disabled={loading}
+        >
+          <Play size={17} />
+
+          {loading
+            ? 'Simulating...'
+            : 'Simulate Leave'}
+        </button>
+
+      </section>
+
+
+      <section className="leave-safe-card">
+
+        <div className="leave-safe-icon">
+          <ShieldCheck size={23} />
+        </div>
+
+        <div>
+          <span>Maximum Safe Leave</span>
+
+          <strong>
+            {safeLeave} classes
+          </strong>
+
+          <p>
+            Based on the current attendance prediction.
           </p>
         </div>
-      </div>
 
-      {/* 4 Outcome Metrics Grid (Section 10) */}
-      <div className="outcomes-grid">
-        <div className="glass-card outcome-card">
-          <span className="outcome-title">Current Attendance</span>
-          <span className="outcome-val">{Number(activeSim?.current_attendance || currentPrediction?.current_attendance || 0).toFixed(1)}%</span>
-          <span className="outcome-note">Baseline attendance prior to taking leave</span>
-        </div>
+      </section>
 
-        <div className="glass-card outcome-card">
-          <span className="outcome-title">After Leave</span>
-          <span className="outcome-val text-amber">{Number(activeSim?.attendance_after_leave || 0).toFixed(1)}%</span>
-          <span className="outcome-note">Direct immediate attendance drop</span>
-        </div>
 
-        <div className="glass-card outcome-card highlight-outcome">
-          <span className="outcome-title">Predicted Future Attendance</span>
-          <span className="outcome-val text-cyan">{Number(activeSim?.predicted_future_attendance || 0).toFixed(1)}%</span>
-          <span className="outcome-note">Recalibrated ML Random Forest model forecast</span>
-        </div>
+      {activeSim && (
+        <>
 
-        <div className="glass-card outcome-card">
-          <span className="outcome-title">Projected Risk</span>
-          <div className="mt-2">
-            {getRiskBadge(activeSim?.risk_level || 'Safe')}
+          <div className="leave-outcomes">
+
+            <div className="leave-outcome-card">
+              <span>Current Attendance</span>
+              <strong>
+                {currentAttendance.toFixed(2)}%
+              </strong>
+            </div>
+
+            <div className="leave-outcome-card leave-outcome-highlight">
+              <span>After {classesToMiss} Classes</span>
+              <strong>
+                {finalAttendance.toFixed(2)}%
+              </strong>
+            </div>
+
+            <div className="leave-outcome-card">
+              <span>Change</span>
+              <strong>
+                {(finalAttendance - currentAttendance).toFixed(2)}%
+              </strong>
+            </div>
+
+            <div className="leave-outcome-card">
+              <span>Risk</span>
+
+              <strong className={`leave-risk-text ${getRiskClass()}`}>
+                {getRiskIcon()}
+                {risk}
+              </strong>
+            </div>
+
           </div>
-          <span className="outcome-note">Threshold applied after ML leave simulation</span>
-        </div>
+
+
+          {trajectory.length > 0 && (
+            <section className="leave-chart-card">
+
+              <div className="leave-chart-header">
+                <div>
+                  <h2>Leave Impact</h2>
+                  <p>
+                    Projected attendance as missed classes increase.
+                  </p>
+                </div>
+
+                {finalAttendance < currentAttendance ? (
+                  <TrendingDown className="leave-chart-down" />
+                ) : (
+                  <TrendingUp className="leave-chart-up" />
+                )}
+              </div>
+
+              <div className="leave-chart">
+                <ResponsiveContainer width="100%" height={330}>
+                  <LineChart data={trajectory}>
+
+                    <CartesianGrid
+                      stroke="#E3E8EE"
+                      strokeDasharray="4 4"
+                    />
+
+                    <XAxis
+                      dataKey="classes"
+                      tick={{ fill: '#64748B', fontSize: 12 }}
+                      axisLine={{ stroke: '#E3E8EE' }}
+                      tickLine={false}
+                    />
+
+                    <YAxis
+                      domain={[50, 100]}
+                      tick={{ fill: '#64748B', fontSize: 12 }}
+                      axisLine={{ stroke: '#E3E8EE' }}
+                      tickLine={false}
+                    />
+
+                    <Tooltip
+                      contentStyle={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E3E8EE',
+                        borderRadius: '10px',
+                        boxShadow: '0 8px 25px rgba(15,23,42,.10)'
+                      }}
+                      labelStyle={{
+                        color: '#0F172A',
+                        fontWeight: 700
+                      }}
+                    />
+
+                    <ReferenceLine
+                      y={75}
+                      stroke="#10B981"
+                      strokeDasharray="6 4"
+                    />
+
+                    <ReferenceLine
+                      y={65}
+                      stroke="#EF4444"
+                      strokeDasharray="6 4"
+                    />
+
+                    <Line
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="#0F172A"
+                      strokeWidth={3}
+                      dot={{
+                        fill: '#DFF3FA',
+                        stroke: '#0F172A',
+                        strokeWidth: 2,
+                        r: 4
+                      }}
+                    />
+
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+            </section>
+          )}
+
+        </>
+      )}
+
+
+      <div className="leave-disclaimer">
+        <strong>Note:</strong> This simulator provides an estimate
+        based on your current attendance data. Actual attendance
+        may vary depending on future class schedules.
       </div>
 
-      {/* Trajectory Curve Visualization */}
-      <div className="glass-card trajectory-card">
-        <div className="trajectory-header">
-          <div>
-            <h3 className="trajectory-title">Leave Sensitivity Trajectory</h3>
-            <p className="trajectory-subtitle">
-              Visualizing future attendance decline as classes missed increases from 0 to 10
-            </p>
-          </div>
-          <span className="badge badge-safe">75% Safe Boundary</span>
-        </div>
-
-        <div className="chart-wrapper">
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={trajectoryChartData} margin={{ top: 20, right: 30, left: 0, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-              <XAxis dataKey="missed" stroke="#64748B" tick={{ fill: '#94A3B8', fontSize: 12 }} label={{ value: 'Classes Missed', position: 'insideBottom', offset: -5, fill: '#64748B', fontSize: 11 }} />
-              <YAxis domain={[50, 100]} stroke="#64748B" tick={{ fill: '#94A3B8', fontSize: 12 }} unit="%" />
-              <Tooltip 
-                contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: '8px' }}
-                labelStyle={{ color: '#F8FAFC', fontWeight: 600 }}
-                formatter={(val, name) => [
-                  `${val}%`, 
-                  name === 'predicted' ? 'Predicted Future Attendance' : 'Immediate Attendance Drop'
-                ]}
-              />
-              <ReferenceLine y={75} stroke="#10B981" strokeDasharray="4 4" label={{ value: '75% Minimum Safe Boundary', fill: '#10B981', fontSize: 11, position: 'insideTopRight' }} />
-              <ReferenceLine y={65} stroke="#EF4444" strokeDasharray="4 4" label={{ value: '65% High Risk Boundary', fill: '#EF4444', fontSize: 11, position: 'insideBottomRight' }} />
-              <Line 
-                type="monotone" 
-                dataKey="predicted" 
-                stroke="#38BDF8" 
-                strokeWidth={3} 
-                dot={{ r: 5, fill: '#0284C7' }} 
-                activeDot={{ r: 7 }}
-                name="predicted"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="immediate" 
-                stroke="#F59E0B" 
-                strokeWidth={2} 
-                strokeDasharray="4 4"
-                dot={{ r: 3, fill: '#F59E0B' }} 
-                name="immediate"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="leave-disclaimer">
-          <Info size={14} className="text-cyan" />
-          <span>Important Notice: This simulation is based on mathematical and machine learning modeling of historical attendance trends. It does not constitute official permission or guaranteed approval from your college administration.</span>
-        </div>
-      </div>
 
       <style>{`
-        .leave-simulator-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1.75rem;
+
+        .leave-page {
+          width: min(1150px, 92%);
+          margin: 0 auto;
+          padding: 2rem 0 4rem;
         }
-        .error-bar {
-          display: flex;
+
+        .leave-header {
+          margin-bottom: 1.5rem;
+        }
+
+        .leave-back-btn {
+          display: inline-flex;
           align-items: center;
-          gap: 0.6rem;
-          color: #F87171;
-          padding: 0.85rem 1.25rem;
-          border-color: rgba(239, 68, 68, 0.3);
-        }
-        .leave-control-card {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 2rem;
-          padding: 2rem;
-        }
-        .control-left {
-          flex: 1;
-          min-width: 300px;
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-        .control-title {
-          font-family: var(--font-heading);
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: var(--primary);
-          display: block;
-        }
-        .control-desc {
-          font-size: 0.92rem;
+          gap: .4rem;
+          border: none;
+          background: transparent;
           color: var(--text-muted);
-        }
-        .slider-input-group {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        .leave-range-slider {
-          width: 100%;
-          accent-color: var(--primary);
-          height: 8px;
           cursor: pointer;
+          padding: .3rem 0;
+          margin-bottom: 1rem;
         }
-        .number-picker {
+
+        .leave-back-btn:hover {
+          color: var(--primary);
+        }
+
+        .leave-title {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: .8rem;
         }
-        .picker-label {
-          font-size: 0.88rem;
-          font-weight: 600;
+
+        .leave-title-icon {
+          width: 46px;
+          height: 46px;
+          display: grid;
+          place-items: center;
+          border-radius: 13px;
+          background: linear-gradient(
+            135deg,
+            var(--bg-ice),
+            var(--bg-peach)
+          );
+          color: var(--primary);
+          border: 1px solid var(--border-card);
+        }
+
+        .leave-title h1 {
+          margin: 0;
           color: var(--text-main);
         }
-        .picker-input {
-          width: 75px;
-          text-align: center;
-          font-weight: 700;
-          font-family: var(--font-mono);
-          padding: 0.45rem 0.5rem;
+
+        .leave-title p {
+          margin: .35rem 0 0;
+          color: var(--text-muted);
         }
-        .max-safe-box {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 78, 59, 0.25) 100%);
-          border: 1px solid rgba(16, 185, 129, 0.35);
-          border-radius: var(--radius-md);
-          padding: 1.5rem;
-          max-width: 320px;
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-        .safe-icon-row {
+
+        .leave-error {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: .5rem;
+          padding: .85rem 1rem;
+          margin-bottom: 1rem;
+          color: #B91C1C;
+          background: var(--high-risk-bg);
+          border: 1px solid var(--high-risk-border);
+          border-radius: 10px;
         }
-        .safe-box-label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
+
+        .leave-control-card,
+        .leave-chart-card,
+        .leave-outcome-card {
+          background: #fff;
+          border: 1px solid var(--border-card);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(15,23,42,.045);
+        }
+
+        .leave-control-card {
+          padding: 1.3rem;
+          display: grid;
+          grid-template-columns: 1fr 2fr auto;
+          gap: 1.3rem;
+          align-items: center;
+        }
+
+        .leave-section-label {
+          display: block;
+          color: var(--text-muted);
+          font-size: .78rem;
+          margin-bottom: .45rem;
+        }
+
+        .leave-number-row {
+          display: flex;
+          align-items: center;
+          gap: .5rem;
+        }
+
+        .leave-number-row input {
+          width: 80px;
+          padding: .65rem;
+          border: 1px solid var(--border-card);
+          border-radius: 8px;
+          color: var(--text-main);
+          background: #fff;
+          font-size: 1rem;
+        }
+
+        .leave-number-row span {
+          color: var(--text-muted);
+        }
+
+        .leave-slider {
+          width: 100%;
+          accent-color: var(--primary);
+        }
+
+        .leave-slider-labels {
+          display: flex;
+          justify-content: space-between;
+          color: var(--text-dim);
+          font-size: .72rem;
+          margin-top: .25rem;
+        }
+
+        .leave-simulate-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: .45rem;
+          white-space: nowrap;
+        }
+
+        .leave-safe-card {
+          margin-top: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1.2rem;
+          border-radius: 16px;
+          background: linear-gradient(
+            135deg,
+            var(--safe-bg),
+            #FFFFFF
+          );
+          border: 1px solid var(--safe-border);
+        }
+
+        .leave-safe-icon {
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          border-radius: 13px;
+          background: #FFFFFF;
+          color: var(--safe);
+          border: 1px solid var(--safe-border);
+        }
+
+        .leave-safe-card span {
+          display: block;
+          color: #047857;
+          font-size: .8rem;
+        }
+
+        .leave-safe-card strong {
+          display: block;
+          color: var(--text-main);
+          font-size: 1.45rem;
+          margin-top: .1rem;
+        }
+
+        .leave-safe-card p {
+          margin: .2rem 0 0;
+          color: var(--text-muted);
+          font-size: .8rem;
+        }
+
+        .leave-outcomes {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+
+        .leave-outcome-card {
+          padding: 1.1rem;
+        }
+
+        .leave-outcome-card span {
+          display: block;
+          color: var(--text-muted);
+          font-size: .78rem;
+          margin-bottom: .35rem;
+        }
+
+        .leave-outcome-card > strong {
+          color: var(--text-main);
+          font-size: 1.25rem;
+        }
+
+        .leave-outcome-highlight {
+          background: linear-gradient(
+            135deg,
+            var(--bg-ice),
+            #FFFFFF
+          );
+          border-color: var(--accent-border);
+        }
+
+        .leave-risk-text {
+          display: inline-flex;
+          align-items: center;
+          gap: .35rem;
+          font-size: 1rem !important;
+        }
+
+        .leave-risk-safe {
+          color: var(--safe) !important;
+        }
+
+        .leave-risk-warning {
+          color: var(--risk) !important;
+        }
+
+        .leave-risk-high {
+          color: var(--high-risk) !important;
+        }
+
+        .leave-chart-card {
+          margin-top: 1rem;
+          padding: 1.25rem;
+        }
+
+        .leave-chart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .leave-chart-header h2 {
+          margin: 0;
+          color: var(--text-main);
+          font-size: 1.05rem;
+        }
+
+        .leave-chart-header p {
+          margin: .3rem 0 0;
+          color: var(--text-muted);
+          font-size: .82rem;
+        }
+
+        .leave-chart-down {
+          color: var(--high-risk);
+        }
+
+        .leave-chart-up {
           color: var(--safe);
         }
-        .safe-box-number {
-          font-family: var(--font-heading);
-          font-size: 2.2rem;
-          font-weight: 800;
-          color: #FFFFFF;
-          line-height: 1.1;
-        }
-        .classes-text {
-          font-size: 1.1rem;
-          color: var(--text-muted);
-        }
-        .safe-box-desc {
-          font-size: 0.8rem;
-          color: #A7F3D0;
-          line-height: 1.4;
+
+        .leave-chart {
+          margin-top: 1rem;
         }
 
-        .outcomes-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 1.25rem;
-        }
-        .outcome-card {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-          padding: 1.35rem;
-        }
-        .highlight-outcome {
-          border-color: rgba(56, 189, 248, 0.4);
-          background: linear-gradient(180deg, rgba(19, 29, 49, 0.9) 0%, rgba(14, 30, 58, 0.6) 100%);
-        }
-        .outcome-title {
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted);
-          font-weight: 600;
-        }
-        .outcome-val {
-          font-family: var(--font-heading);
-          font-size: 2.1rem;
-          font-weight: 800;
-          line-height: 1.1;
-        }
-        .outcome-note {
-          font-size: 0.75rem;
-          color: var(--text-dim);
-          margin-top: auto;
-        }
-
-        .trajectory-card {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-          padding: 1.75rem;
-        }
-        .trajectory-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-        }
-        .trajectory-title {
-          font-size: 1.15rem;
-          font-weight: 700;
-        }
-        .trajectory-subtitle {
-          font-size: 0.82rem;
-          color: var(--text-muted);
-        }
         .leave-disclaimer {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.78rem;
+          margin-top: 1rem;
+          padding: 1rem;
           color: var(--text-muted);
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px dashed rgba(255, 255, 255, 0.08);
-          padding: 0.65rem 0.9rem;
-          border-radius: var(--radius-sm);
+          background: #F8FAFC;
+          border: 1px dashed var(--border-card);
+          border-radius: 12px;
+          font-size: .78rem;
+          line-height: 1.5;
         }
-        .spin-icon {
-          animation: spin 1s linear infinite;
+
+        .leave-disclaimer strong {
+          color: var(--text-main);
         }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+
+        @media (max-width: 850px) {
+          .leave-control-card {
+            grid-template-columns: 1fr;
+          }
+
+          .leave-outcomes {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
+
+        @media (max-width: 520px) {
+          .leave-outcomes {
+            grid-template-columns: 1fr;
+          }
+        }
+
       `}</style>
+
     </div>
   );
 }

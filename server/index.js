@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
 import predictionRoutes from './routes/predictionRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 
@@ -15,12 +17,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Parse JSON request bodies
 app.use(express.json());
 
-// Routes
+// ===============================
+// API ROUTES
+// ===============================
+
+// Existing prediction / ML routes
 app.use('/api', predictionRoutes);
 
-// Base route
+// New Synapse AI routes
+app.use('/api/ai', aiRoutes);
+
+// ===============================
+// BASE ROUTE
+// ===============================
+
 app.get('/', (req, res) => {
   res.json({
     name: 'Smart Attendance AI API',
@@ -30,21 +43,42 @@ app.get('/', (req, res) => {
       'GET /api/health',
       'POST /api/predict',
       'POST /api/simulate-leave',
-      'GET /api/model-info'
+      'GET /api/model-info',
+      'POST /api/ai/chat'
     ]
   });
 });
 
-// Global error handler
+// ===============================
+// GLOBAL ERROR HANDLER
+// ===============================
+
 app.use((err, req, res, next) => {
   console.error('Unhandled server error:', err);
+
   res.status(500).json({
     success: false,
     error: 'Internal server error occurred. Please try again.'
   });
 });
 
+// ===============================
+// START SERVER
+// ===============================
+
 app.listen(PORT, () => {
-  console.log(`[Smart Attendance AI] Node.js Express server running on http://localhost:${PORT}`);
-  console.log(`[Smart Attendance AI] Forwarding ML requests to ${process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000'}`);
+  console.log(
+    `[Smart Attendance AI] Node.js Express server running on http://localhost:${PORT}`
+  );
+
+  console.log(
+    `[Smart Attendance AI] Forwarding ML requests to ${
+      process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000'
+    }`
+  );
+
+  console.log(
+    '[Smart Attendance AI] Synapse AI endpoint available at http://localhost:' +
+      `${PORT}/api/ai/chat`
+  );
 });

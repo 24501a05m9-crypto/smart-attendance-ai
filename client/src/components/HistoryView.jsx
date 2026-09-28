@@ -1,280 +1,627 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  History, 
-  Trash2, 
-  Eye, 
-  Calendar, 
-  User, 
-  ShieldCheck, 
-  AlertTriangle, 
-  AlertOctagon, 
+import React, { useEffect, useState } from 'react';
+import {
+  History,
+  Trash2,
+  Eye,
+  Calendar,
+  ShieldCheck,
+  AlertTriangle,
+  AlertOctagon,
   Sparkles,
   ArrowRight
 } from 'lucide-react';
-import { 
-  getStoredPredictions, 
-  deleteStoredPrediction, 
-  clearAllStoredPredictions 
+
+import {
+  getStoredPredictions,
+  deleteStoredPrediction,
+  clearAllStoredPredictions
 } from '../utils/storage';
 
-export default function HistoryView({ onLoadPrediction, onGoToInput }) {
-  const [historyList, setHistoryList] = useState([]);
+export default function HistoryView({
+  onLoadPrediction,
+  onGoToInput
+}) {
+  const [predictions, setPredictions] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    setHistoryList(getStoredPredictions());
+    loadHistory();
   }, []);
 
-  const handleDelete = (id, e) => {
-    e.stopPropagation();
-    const updated = deleteStoredPrediction(id);
-    setHistoryList(updated);
+  const loadHistory = () => {
+    const stored = getStoredPredictions();
+    setPredictions(Array.isArray(stored) ? stored : []);
   };
 
-  const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear your local prediction history?')) {
-      clearAllStoredPredictions();
-      setHistoryList([]);
-    }
+  const handleDelete = (id) => {
+    deleteStoredPrediction(id);
+    loadHistory();
   };
 
-  const formatDate = (isoString) => {
-    try {
-      const d = new Date(isoString);
-      return d.toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return isoString;
-    }
+  const handleClear = () => {
+    clearAllStoredPredictions();
+    setPredictions([]);
+    setShowConfirm(false);
   };
 
-  const getRiskBadge = (risk) => {
-    switch (risk) {
-      case 'Safe':
-        return <span className="badge badge-safe">Safe</span>;
-      case 'At Risk':
-        return <span className="badge badge-risk">At Risk</span>;
-      default:
-        return <span className="badge badge-high-risk">High Risk</span>;
+  const getPredictionData = (item) =>
+    item?.predictionData ||
+    item?.prediction_data ||
+    item;
+
+  const getAttendance = (item) => {
+    const data = getPredictionData(item);
+
+    return Number(
+      data?.current_attendance?.overall_attendance ??
+      data?.current_attendance?.percentage ??
+      data?.overall_attendance ??
+      0
+    );
+  };
+
+  const getRisk = (item) => {
+    const data = getPredictionData(item);
+
+    return (
+      data?.risk_level ||
+      data?.risk ||
+      'Unknown'
+    );
+  };
+
+  const getRiskIcon = (risk) => {
+    const value = String(risk).toLowerCase();
+
+    if (value.includes('high')) {
+      return <AlertOctagon size={17} />;
     }
+
+    if (value.includes('risk')) {
+      return <AlertTriangle size={17} />;
+    }
+
+    return <ShieldCheck size={17} />;
+  };
+
+  const getRiskClass = (risk) => {
+    const value = String(risk).toLowerCase();
+
+    if (value.includes('high')) return 'history-risk-high';
+    if (value.includes('risk')) return 'history-risk-medium';
+
+    return 'history-risk-safe';
+  };
+
+  const formatDate = (item) => {
+    const date =
+      item?.createdAt ||
+      item?.created_at ||
+      item?.timestamp ||
+      item?.date;
+
+    if (!date) return 'Previous prediction';
+
+    const parsed = new Date(date);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Previous prediction';
+    }
+
+    return parsed.toLocaleString();
   };
 
   return (
-    <div className="history-view-container animate-fade-in">
-      <div className="view-header">
+    <div className="history-page animate-fade-in">
+
+      <div className="history-header">
         <div>
-          <h2>Prediction Session History</h2>
-          <p className="view-subtitle">
-            Past predictions saved privately in your browser's local storage. Zero logins, zero tracking.
+          <div className="history-title-row">
+            <div className="history-title-icon">
+              <History size={21} />
+            </div>
+
+            <h1>Prediction History</h1>
+          </div>
+
+          <p>
+            View and reopen your previous attendance predictions.
           </p>
         </div>
 
-        {historyList.length > 0 && (
-          <button className="btn-danger btn-sm" onClick={handleClearAll}>
-            <Trash2 size={14} />
-            <span>Clear All History</span>
+        {predictions.length > 0 && (
+          <button
+            type="button"
+            className="history-clear-btn"
+            onClick={() => setShowConfirm(true)}
+          >
+            <Trash2 size={16} />
+            Clear History
           </button>
         )}
       </div>
 
-      {historyList.length === 0 ? (
-        <div className="glass-card text-center empty-history-card">
-          <History size={40} className="empty-history-icon" />
-          <h3>No Saved Predictions Yet</h3>
-          <p className="text-muted mt-2">
-            Every time you run an attendance prediction, your session summary is automatically saved here for quick viewing.
+
+      {predictions.length === 0 ? (
+
+        <section className="history-empty">
+
+          <div className="history-empty-icon">
+            <History size={34} />
+          </div>
+
+          <h2>No prediction history</h2>
+
+          <p>
+            Your attendance predictions will appear here after
+            you complete a prediction.
           </p>
-          <button className="btn-primary mt-4" onClick={onGoToInput}>
-            <span>Run New Prediction</span>
-            <ArrowRight size={16} />
+
+          <button
+            type="button"
+            className="btn-primary history-start-btn"
+            onClick={onGoToInput}
+          >
+            <Sparkles size={17} />
+            Run New Prediction
+            <ArrowRight size={17} />
           </button>
-        </div>
+
+        </section>
+
       ) : (
-        <div className="history-grid">
-          {historyList.map((item) => (
-            <div 
-              key={item.id} 
-              className="glass-card history-card"
-              onClick={() => onLoadPrediction(item)}
-            >
-              <div className="history-card-header">
-                <div className="history-date">
-                  <Calendar size={14} className="text-cyan" />
-                  <span>{formatDate(item.timestamp)}</span>
-                </div>
-                {getRiskBadge(item.risk_level)}
-              </div>
 
-              <div className="history-student-info">
-                <span className="history-student-name">
-                  {item.student_info?.name || 'Anonymous Student'}
-                </span>
-                <span className="history-student-meta">
-                  {item.student_info?.department || 'Dept'} • Year {item.student_info?.year} (Sem {item.student_info?.semester})
-                </span>
-              </div>
+        <div className="history-list">
 
-              <div className="history-metrics-row">
-                <div className="history-metric">
-                  <span className="h-metric-label">Current</span>
-                  <span className="h-metric-val">{Number(item.current_attendance).toFixed(1)}%</span>
-                </div>
-                <div className="h-divider"></div>
-                <div className="history-metric">
-                  <span className="h-metric-label">September</span>
-                  <span className="h-metric-val text-cyan">{Number(item.september_prediction).toFixed(1)}%</span>
-                </div>
-                <div className="h-divider"></div>
-                <div className="history-metric">
-                  <span className="h-metric-label">October</span>
-                  <span className="h-metric-val text-purple">{Number(item.october_forecast).toFixed(1)}%</span>
-                </div>
-              </div>
+          {predictions.map((item, index) => {
 
-              <div className="history-card-footer">
-                <button 
-                  className="btn-outline btn-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLoadPrediction(item);
-                  }}
-                >
-                  <Eye size={12} />
-                  <span>View Dashboard</span>
-                </button>
-                <button 
-                  className="btn-icon-delete"
-                  onClick={(e) => handleDelete(item.id, e)}
-                  title="Delete this record"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
+            const attendance = getAttendance(item);
+            const risk = getRisk(item);
+
+            const id =
+              item?.id ??
+              item?.timestamp ??
+              index;
+
+            return (
+              <article
+                className="history-card"
+                key={id}
+              >
+
+                <div className="history-card-top">
+
+                  <div className="history-date">
+                    <Calendar size={16} />
+                    {formatDate(item)}
+                  </div>
+
+                  <span
+                    className={`history-risk ${getRiskClass(risk)}`}
+                  >
+                    {getRiskIcon(risk)}
+                    {risk}
+                  </span>
+
+                </div>
+
+
+                <div className="history-metrics-row">
+
+                  <div className="history-metric">
+                    <span>Attendance</span>
+                    <strong>
+                      {attendance.toFixed(2)}%
+                    </strong>
+                  </div>
+
+                  <div className="history-divider" />
+
+                  <div className="history-metric">
+                    <span>Subjects</span>
+                    <strong>
+                      {
+                        getPredictionData(item)
+                          ?.subject_breakdown
+                          ?.length ?? 0
+                      }
+                    </strong>
+                  </div>
+
+                </div>
+
+
+                <div className="history-card-actions">
+
+                  <button
+                    type="button"
+                    className="history-view-btn"
+                    onClick={() => onLoadPrediction(item)}
+                  >
+                    <Eye size={16} />
+                    View Prediction
+                  </button>
+
+                  <button
+                    type="button"
+                    className="history-delete-btn"
+                    onClick={() => handleDelete(id)}
+                    aria-label="Delete prediction"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+
+                </div>
+
+              </article>
+            );
+          })}
+
         </div>
       )}
 
+
+      {showConfirm && (
+        <div className="history-confirm-overlay">
+
+          <div className="history-confirm">
+
+            <div className="history-confirm-icon">
+              <Trash2 size={22} />
+            </div>
+
+            <h3>Clear prediction history?</h3>
+
+            <p>
+              This will permanently remove all saved prediction
+              history from this browser.
+            </p>
+
+            <div className="history-confirm-actions">
+
+              <button
+                type="button"
+                className="history-cancel-btn"
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="history-confirm-delete"
+                onClick={handleClear}
+              >
+                Clear History
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+
       <style>{`
-        .history-view-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1.75rem;
+
+        .history-page {
+          width: min(1100px, 92%);
+          margin: 0 auto;
+          padding: 2.5rem 0 4rem;
         }
-        .empty-history-card {
-          padding: 3.5rem 2rem;
+
+        .history-header {
           display: flex;
-          flex-direction: column;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.8rem;
+        }
+
+        .history-title-row {
+          display: flex;
           align-items: center;
+          gap: .75rem;
         }
-        .empty-history-icon {
-          color: #475569;
-          margin-bottom: 1rem;
-        }
-        .history-grid {
+
+        .history-title-icon {
+          width: 42px;
+          height: 42px;
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 1.25rem;
+          place-items: center;
+          border-radius: 12px;
+          background: var(--bg-ice);
+          color: var(--primary);
+          border: 1px solid var(--accent-border);
         }
-        .history-card {
-          display: flex;
-          flex-direction: column;
-          gap: 0.9rem;
-          padding: 1.25rem;
+
+        .history-header h1 {
+          margin: 0;
+          color: var(--text-main);
+          font-size: 1.8rem;
+        }
+
+        .history-header p {
+          margin: .55rem 0 0;
+          color: var(--text-muted);
+        }
+
+        .history-clear-btn,
+        .history-view-btn,
+        .history-delete-btn,
+        .history-cancel-btn,
+        .history-confirm-delete {
+          border: 1px solid var(--border-card);
           cursor: pointer;
-          transition: transform 0.2s ease, border-color 0.2s ease;
+          font-family: inherit;
+          transition: .2s ease;
         }
+
+        .history-clear-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: .45rem;
+          padding: .7rem 1rem;
+          border-radius: 9px;
+          background: #fff;
+          color: var(--high-risk);
+        }
+
+        .history-clear-btn:hover {
+          background: var(--high-risk-bg);
+          border-color: var(--high-risk-border);
+        }
+
+        .history-empty {
+          padding: 4rem 1.5rem;
+          text-align: center;
+          background: #fff;
+          border: 1px solid var(--border-card);
+          border-radius: 18px;
+          box-shadow: 0 10px 30px rgba(15,23,42,.05);
+        }
+
+        .history-empty-icon {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 1.2rem;
+          display: grid;
+          place-items: center;
+          border-radius: 20px;
+          background: linear-gradient(
+            135deg,
+            var(--bg-ice),
+            var(--bg-peach)
+          );
+          color: var(--primary);
+        }
+
+        .history-empty h2 {
+          margin: 0;
+          color: var(--text-main);
+        }
+
+        .history-empty p {
+          max-width: 480px;
+          margin: .7rem auto 1.5rem;
+          color: var(--text-muted);
+          line-height: 1.6;
+        }
+
+        .history-start-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: .5rem;
+        }
+
+        .history-list {
+          display: grid;
+          gap: 1rem;
+        }
+
+        .history-card {
+          background: #fff;
+          border: 1px solid var(--border-card);
+          border-radius: 16px;
+          padding: 1.15rem;
+          box-shadow: 0 8px 24px rgba(15,23,42,.045);
+          transition: .2s ease;
+        }
+
         .history-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(56, 189, 248, 0.4);
+          border-color: var(--accent-border);
+          box-shadow: 0 12px 30px rgba(15,23,42,.08);
         }
-        .history-card-header {
+
+        .history-card-top,
+        .history-card-actions {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 1rem;
         }
+
         .history-date {
           display: flex;
           align-items: center;
-          gap: 0.45rem;
-          font-size: 0.78rem;
+          gap: .45rem;
           color: var(--text-muted);
+          font-size: .85rem;
         }
-        .history-student-info {
-          display: flex;
-          flex-direction: column;
-        }
-        .history-student-name {
+
+        .history-risk {
+          display: inline-flex;
+          align-items: center;
+          gap: .35rem;
+          padding: .38rem .65rem;
+          border-radius: 999px;
+          font-size: .78rem;
           font-weight: 700;
-          font-size: 1.05rem;
-          color: var(--text-main);
         }
-        .history-student-meta {
-          font-size: 0.8rem;
-          color: var(--text-dim);
+
+        .history-risk-safe {
+          color: #047857;
+          background: var(--safe-bg);
+          border: 1px solid var(--safe-border);
         }
+
+        .history-risk-medium {
+          color: #B45309;
+          background: var(--risk-bg);
+          border: 1px solid var(--risk-border);
+        }
+
+        .history-risk-high {
+          color: #B91C1C;
+          background: var(--high-risk-bg);
+          border: 1px solid var(--high-risk-border);
+        }
+
         .history-metrics-row {
           display: flex;
           align-items: center;
-          justify-content: space-around;
-          background: #0B1322;
-          border: 1px solid #1E293B;
-          border-radius: var(--radius-sm);
-          padding: 0.65rem 0.5rem;
+          margin: 1.2rem 0;
+          padding: 1rem;
+          background: var(--bg-ice);
+          border: 1px solid var(--accent-border);
+          border-radius: 12px;
         }
+
         .history-metric {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+          flex: 1;
         }
-        .h-metric-label {
-          font-size: 0.68rem;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: var(--text-dim);
+
+        .history-metric span {
+          display: block;
+          color: var(--text-muted);
+          font-size: .78rem;
+          margin-bottom: .25rem;
         }
-        .h-metric-val {
-          font-family: var(--font-mono);
-          font-weight: 700;
-          font-size: 1.05rem;
+
+        .history-metric strong {
+          color: var(--text-main);
+          font-size: 1.25rem;
         }
-        .h-divider {
+
+        .history-divider {
           width: 1px;
-          height: 24px;
-          background: #1E293B;
+          height: 35px;
+          background: var(--border-card);
+          margin: 0 1rem;
         }
-        .history-card-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding-top: 0.4rem;
-          border-top: 1px solid rgba(148, 163, 184, 0.08);
-        }
-        .btn-xs {
-          padding: 0.3rem 0.65rem;
-          font-size: 0.75rem;
+
+        .history-view-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.35rem;
+          gap: .45rem;
+          padding: .65rem .9rem;
+          border-radius: 8px;
+          background: var(--primary);
+          color: #fff;
         }
-        .btn-icon-delete {
-          background: transparent;
-          color: var(--text-dim);
-          padding: 0.4rem;
-          border-radius: 4px;
+
+        .history-view-btn:hover {
+          background: var(--primary-hover);
+        }
+
+        .history-delete-btn {
+          width: 38px;
+          height: 38px;
+          display: grid;
+          place-items: center;
+          border-radius: 8px;
+          background: #fff;
+          color: var(--high-risk);
+        }
+
+        .history-delete-btn:hover {
+          background: var(--high-risk-bg);
+          border-color: var(--high-risk-border);
+        }
+
+        .history-confirm-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 3000;
+          display: grid;
+          place-items: center;
+          padding: 1rem;
+          background: rgba(15,23,42,.3);
+          backdrop-filter: blur(4px);
+        }
+
+        .history-confirm {
+          width: min(420px, 100%);
+          padding: 1.5rem;
+          background: #fff;
+          border: 1px solid var(--border-card);
+          border-radius: 16px;
+          box-shadow: 0 25px 60px rgba(15,23,42,.18);
+        }
+
+        .history-confirm-icon {
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          background: var(--high-risk-bg);
+          color: var(--high-risk);
+        }
+
+        .history-confirm h3 {
+          margin: 1rem 0 .4rem;
+          color: var(--text-main);
+        }
+
+        .history-confirm p {
+          color: var(--text-muted);
+          line-height: 1.5;
+        }
+
+        .history-confirm-actions {
           display: flex;
-          align-items: center;
-          justify-content: center;
+          justify-content: flex-end;
+          gap: .7rem;
+          margin-top: 1.3rem;
         }
-        .btn-icon-delete:hover {
-          color: #EF4444;
-          background: rgba(239, 68, 68, 0.1);
+
+        .history-cancel-btn,
+        .history-confirm-delete {
+          padding: .65rem .9rem;
+          border-radius: 8px;
         }
+
+        .history-cancel-btn {
+          background: #fff;
+          color: var(--text-main);
+        }
+
+        .history-cancel-btn:hover {
+          background: #F8FAFC;
+        }
+
+        .history-confirm-delete {
+          background: var(--high-risk);
+          color: #fff;
+          border-color: var(--high-risk);
+        }
+
+        @media (max-width: 650px) {
+          .history-header {
+            flex-direction: column;
+          }
+
+          .history-clear-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+
       `}</style>
+
     </div>
   );
 }

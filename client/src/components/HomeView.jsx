@@ -1,361 +1,419 @@
 import React from 'react';
-import { 
-  ArrowRight, 
-  ShieldOff, 
-  Cpu, 
-  CalendarDays, 
-  SlidersHorizontal, 
-  CheckCircle2, 
-  Sparkles, 
-  GraduationCap,
-  Layers,
-  TrendingUp,
-  AlertTriangle
-} from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 export default function HomeView({ onStart }) {
   return (
     <div className="home-container animate-fade-in">
-      {/* Hero Section */}
+
       <section className="hero-section">
+
+        {/* Small label */}
+
         <div className="hero-pill">
-          <Sparkles size={14} className="hero-pill-sparkle" />
-          <span>General Purpose AI for All College Students</span>
+          <span className="hero-dot"></span>
+          Smart Attendance Prediction
         </div>
+
+
+        {/* Main heading */}
 
         <h1 className="hero-heading">
-          SMART ATTENDANCE <span className="gradient-text">AI</span>
+          Predict Your{' '}
+          <span className="hero-highlight">
+            Attendance
+          </span>
         </h1>
 
+
+        {/* Main subtitle */}
+
         <p className="hero-subtitle">
-          "Predict your future attendance before it becomes a problem."
+          Know where your attendance stands before it becomes a problem.
         </p>
+
+
+        {/* Description */}
 
         <p className="hero-description">
-          Powered by a trained <strong>Random Forest Regressor</strong> model. Simply enter your current classes conducted and attended to get instant forecasts, risk assessment, and safe leave planning.
+          Enter your current attendance details to get your attendance
+          prediction, risk level and safe leave possibilities.
         </p>
 
-        <div className="hero-cta-group">
-          <button className="btn-primary hero-btn-lg" onClick={onStart}>
-            <span>Check My Attendance</span>
-            <ArrowRight size={20} />
-          </button>
-        </div>
 
-        {/* Instant Access Guarantee Banner */}
-        <div className="instant-access-banner">
-          <div className="banner-item">
-            <ShieldOff size={16} className="text-cyan" />
-            <span>Zero Login & No Registration</span>
-          </div>
-          <div className="banner-divider">•</div>
-          <div className="banner-item">
-            <GraduationCap size={16} className="text-cyan" />
-            <span>Any Department & Year</span>
-          </div>
-          <div className="banner-divider">•</div>
-          <div className="banner-item">
-            <Cpu size={16} className="text-cyan" />
-            <span>Real Trained ML Pipeline</span>
-          </div>
-        </div>
+        {/* Main action */}
+
+        <button
+          type="button"
+          className="btn-primary hero-btn-lg"
+          onClick={onStart}
+        >
+          <Sparkles size={18} />
+          <span>Predict Attendance</span>
+          <ArrowRight size={19} />
+        </button>
+
       </section>
 
-      {/* Feature Grid */}
-      <section className="features-grid">
-        <div className="glass-card feature-card">
-          <div className="feature-icon-box cyan-glow">
-            <Cpu size={24} className="text-cyan" />
-          </div>
-          <h3 className="feature-title">Trained ML Model</h3>
-          <p className="feature-desc">
-            Powered by a 300-tree Random Forest Regressor trained on real academic attendance distributions. No dummy predictions or simple math tricks.
-          </p>
-          <div className="feature-tags">
-            <span className="mini-tag">12 Features</span>
-            <span className="mini-tag">OneHot Cohort</span>
-            <span className="mini-tag">scikit-learn</span>
-          </div>
-        </div>
-
-        <div className="glass-card feature-card">
-          <div className="feature-icon-box purple-glow">
-            <CalendarDays size={24} className="text-purple" />
-          </div>
-          <h3 className="feature-title">Dual Horizon Forecast</h3>
-          <p className="feature-desc">
-            Get your trained <strong>September Model Forecast</strong> along with an exploratory <strong>October Future Forecast</strong> to know where you stand well in advance.
-          </p>
-          <div className="feature-tags">
-            <span className="mini-tag">September Target</span>
-            <span className="mini-tag">October Projection</span>
-          </div>
-        </div>
-
-        <div className="glass-card feature-card">
-          <div className="feature-icon-box amber-glow">
-            <SlidersHorizontal size={24} className="text-amber" />
-          </div>
-          <h3 className="feature-title">"Can I Take Leave?" Simulator</h3>
-          <p className="feature-desc">
-            Simulate missing 1, 2, or 5 upcoming classes. The ML pipeline recalibrates all statistical features and predicts your resulting future attendance.
-          </p>
-          <div className="feature-tags">
-            <span className="mini-tag">Safe Leave Calculator</span>
-            <span className="mini-tag">Impact Trajectory</span>
-          </div>
-        </div>
-
-        <div className="glass-card feature-card">
-          <div className="feature-icon-box green-glow">
-            <Layers size={24} className="text-emerald" />
-          </div>
-          <h3 className="feature-title">Universal Compatibility</h3>
-          <p className="feature-desc">
-            Designed for ANY student: CSE, ECE, EEE, Mechanical, Civil, AI/DS, or any branch; 1st, 2nd, 3rd, or 4th year; any semester. Enter any subjects dynamically.
-          </p>
-          <div className="feature-tags">
-            <span className="mini-tag">Flexible Cohort</span>
-            <span className="mini-tag">Dynamic Subjects</span>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Workflow */}
-      <section className="workflow-section glass-card">
-        <h2 className="section-title text-center">How It Works in 3 Steps</h2>
-        <div className="steps-row">
-          <div className="step-col">
-            <div className="step-num">01</div>
-            <h4>Enter Current Classes</h4>
-            <p>Add your subjects with classes conducted and attended so far. No account creation required.</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step-col">
-            <div className="step-num">02</div>
-            <h4>Automated ML Engineering</h4>
-            <p>The system calculates 11 statistical features (overall, mean, std dev, thresholds) and maps your cohort.</p>
-          </div>
-          <div className="step-arrow">→</div>
-          <div className="step-col">
-            <div className="step-num">03</div>
-            <h4>Forecast & Plan Leaves</h4>
-            <p>View your September and October forecasts, risk tier, and simulate leaves with zero guesswork.</p>
-          </div>
-        </div>
-
-        <div className="text-center mt-6">
-          <button className="btn-primary" onClick={onStart}>
-            Get Started Now
-            <ArrowRight size={18} />
-          </button>
-        </div>
-      </section>
 
       <style>{`
+
+        /* =========================================
+           HOME CONTAINER
+        ========================================= */
+
         .home-container {
+          width: 100%;
+
+          min-height: calc(100vh - 76px);
+
           display: flex;
-          flex-direction: column;
-          gap: 3.5rem;
-          padding-top: 1rem;
-        }
-        .hero-section {
-          display: flex;
-          flex-direction: column;
+
           align-items: center;
-          text-align: center;
-          max-width: 840px;
-          margin: 0 auto;
+
+          justify-content: center;
+
+          box-sizing: border-box;
+
+          padding:
+            2rem 1.5rem 4rem;
+
+          position: relative;
+
+          overflow: hidden;
         }
+
+
+        /* =========================================
+           SOFT BACKGROUND ACCENTS
+        ========================================= */
+
+        .home-container::before {
+          content: '';
+
+          position: absolute;
+
+          width: 420px;
+
+          height: 420px;
+
+          top: -160px;
+
+          left: -120px;
+
+          border-radius: 50%;
+
+          background:
+            rgba(223, 243, 250, 0.65);
+
+          filter: blur(30px);
+
+          pointer-events: none;
+        }
+
+
+        .home-container::after {
+          content: '';
+
+          position: absolute;
+
+          width: 420px;
+
+          height: 420px;
+
+          right: -150px;
+
+          bottom: -180px;
+
+          border-radius: 50%;
+
+          background:
+            rgba(251, 237, 230, 0.72);
+
+          filter: blur(30px);
+
+          pointer-events: none;
+        }
+
+
+        /* =========================================
+           HERO
+        ========================================= */
+
+        .hero-section {
+          width: 100%;
+
+          max-width: 850px;
+
+          min-height: 500px;
+
+          display: flex;
+
+          flex-direction: column;
+
+          align-items: center;
+
+          justify-content: center;
+
+          text-align: center;
+
+          position: relative;
+
+          z-index: 1;
+        }
+
+
+        /* =========================================
+           HERO PILL
+        ========================================= */
+
         .hero-pill {
           display: inline-flex;
+
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.4rem 1rem;
-          background: rgba(56, 189, 248, 0.1);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          border-radius: 9999px;
-          font-size: 0.82rem;
-          font-weight: 600;
-          color: var(--primary);
+
+          gap: 0.55rem;
+
+          padding:
+            0.45rem 0.9rem;
+
           margin-bottom: 1.5rem;
+
+          border:
+            1px solid #C5E6EE;
+
+          border-radius: 999px;
+
+          background:
+            rgba(255, 255, 255, 0.78);
+
+          color: #334155;
+
+          font-size: 0.78rem;
+
+          font-weight: 600;
+
+          box-shadow:
+            0 3px 12px rgba(15, 23, 42, 0.04);
+
+          backdrop-filter: blur(8px);
         }
-        .hero-pill-sparkle {
-          color: #38BDF8;
+
+
+        .hero-dot {
+          width: 7px;
+
+          height: 7px;
+
+          flex-shrink: 0;
+
+          border-radius: 50%;
+
+          background: #10B981;
+
+          box-shadow:
+            0 0 0 3px rgba(16, 185, 129, 0.10);
         }
+
+
+        /* =========================================
+           MAIN HEADING
+        ========================================= */
+
         .hero-heading {
-          font-size: clamp(2.5rem, 6vw, 4.2rem);
+          margin: 0;
+
+          color: #0F172A;
+
+          font-size:
+            clamp(2.8rem, 6vw, 4.8rem);
+
           font-weight: 800;
-          line-height: 1.1;
-          letter-spacing: -0.03em;
-          margin-bottom: 1.25rem;
+
+          line-height: 1.05;
+
+          letter-spacing: -0.045em;
         }
-        .gradient-text {
-          background: linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+
+
+        /* =========================================
+           HIGHLIGHTED WORD
+        ========================================= */
+
+        .hero-highlight {
+          position: relative;
+
+          color: #0F172A;
+
+          display: inline-block;
         }
+
+
+        .hero-highlight::after {
+          content: '';
+
+          position: absolute;
+
+          left: 3%;
+
+          right: 3%;
+
+          bottom: -5px;
+
+          height: 7px;
+
+          border-radius: 999px;
+
+          background:
+            linear-gradient(
+              90deg,
+              #DFF3FA,
+              #FBEDE6
+            );
+
+          z-index: -1;
+        }
+
+
+        /* =========================================
+           SUBTITLE
+        ========================================= */
+
         .hero-subtitle {
-          font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-          color: #E2E8F0;
+          margin:
+            1.5rem 0 0;
+
+          color: #334155;
+
+          font-size:
+            clamp(1.05rem, 2vw, 1.3rem);
+
           font-weight: 600;
-          margin-bottom: 1rem;
-          font-style: italic;
+
+          line-height: 1.5;
         }
+
+
+        /* =========================================
+           DESCRIPTION
+        ========================================= */
+
         .hero-description {
-          font-size: 1.05rem;
-          color: var(--text-muted);
-          max-width: 680px;
+          max-width: 650px;
+
+          margin:
+            1rem 0 0;
+
+          color: #64748B;
+
+          font-size: 0.98rem;
+
           line-height: 1.7;
-          margin-bottom: 2rem;
         }
+
+
+        /* =========================================
+           MAIN BUTTON
+        ========================================= */
+
         .hero-btn-lg {
-          padding: 0.95rem 2.25rem;
-          font-size: 1.1rem;
-          border-radius: var(--radius-lg);
-        }
-        .instant-access-banner {
           margin-top: 2rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 1rem;
-          padding: 0.75rem 1.5rem;
-          background: rgba(19, 29, 49, 0.5);
-          border: 1px solid rgba(148, 163, 184, 0.12);
-          border-radius: 9999px;
-          font-size: 0.85rem;
-          color: var(--text-muted);
-        }
-        .banner-item {
-          display: flex;
-          align-items: center;
-          gap: 0.45rem;
-        }
-        .banner-divider {
-          color: #334155;
-        }
-        .text-cyan { color: #38BDF8; }
-        .text-purple { color: #A855F7; }
-        .text-amber { color: #F59E0B; }
-        .text-emerald { color: #10B981; }
 
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-        .feature-card {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.75rem;
-        }
-        .feature-icon-box {
-          width: 52px;
-          height: 52px;
-          border-radius: 14px;
-          display: flex;
+          min-height: 50px;
+
+          display: inline-flex;
+
           align-items: center;
+
           justify-content: center;
-          margin-bottom: 0.5rem;
-        }
-        .cyan-glow {
-          background: rgba(56, 189, 248, 0.1);
-          border: 1px solid rgba(56, 189, 248, 0.25);
-        }
-        .purple-glow {
-          background: rgba(168, 85, 247, 0.1);
-          border: 1px solid rgba(168, 85, 247, 0.25);
-        }
-        .amber-glow {
-          background: rgba(245, 158, 11, 0.1);
-          border: 1px solid rgba(245, 158, 11, 0.25);
-        }
-        .green-glow {
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.25);
-        }
-        .feature-title {
-          font-size: 1.2rem;
+
+          gap: 0.55rem;
+
+          padding:
+            0.85rem 1.35rem;
+
+          border-radius: var(--radius-md);
+
+          font-size: 0.95rem;
+
           font-weight: 700;
-        }
-        .feature-desc {
-          font-size: 0.92rem;
-          color: var(--text-muted);
-          line-height: 1.6;
-          flex: 1;
-        }
-        .feature-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.4rem;
-          margin-top: 0.5rem;
-        }
-        .mini-tag {
-          font-size: 0.72rem;
-          font-weight: 600;
-          padding: 0.2rem 0.55rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 6px;
-          color: var(--text-muted);
+
+          cursor: pointer;
         }
 
-        .workflow-section {
-          padding: 2.5rem;
+
+        .hero-btn-lg:hover {
+          transform: translateY(-2px);
+
+          box-shadow:
+            0 10px 26px
+            rgba(15, 23, 42, 0.18);
         }
-        .section-title {
-          font-size: 1.6rem;
-          font-weight: 700;
-          margin-bottom: 2rem;
+
+
+        .hero-btn-lg svg {
+          flex-shrink: 0;
         }
-        .text-center { text-align: center; }
-        .mt-6 { margin-top: 2rem; }
-        .steps-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1.5rem;
-        }
-        .step-col {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 0.5rem;
-        }
-        .step-num {
-          font-family: var(--font-mono);
-          font-size: 1.8rem;
-          font-weight: 800;
-          color: var(--primary);
-          line-height: 1;
-        }
-        .step-col h4 {
-          font-size: 1.1rem;
-          font-weight: 600;
-        }
-        .step-col p {
-          font-size: 0.88rem;
-          color: var(--text-muted);
-        }
-        .step-arrow {
-          font-size: 1.8rem;
-          color: #334155;
-          font-weight: 300;
-        }
-        @media (max-width: 768px) {
-          .steps-row {
-            flex-direction: column;
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 750px) {
+
+          .home-container {
+            min-height:
+              calc(100vh - 70px);
+
+            padding:
+              1rem 1rem 3rem;
           }
-          .step-arrow {
-            transform: rotate(90deg);
+
+
+          .hero-section {
+            min-height: 430px;
           }
+
         }
+
+
+        @media (max-width: 500px) {
+
+          .hero-heading {
+            font-size: 2.7rem;
+          }
+
+
+          .hero-subtitle {
+            font-size: 1rem;
+          }
+
+
+          .hero-description {
+            font-size: 0.88rem;
+
+            max-width: 95%;
+          }
+
+
+          .hero-pill {
+            font-size: 0.72rem;
+
+            padding:
+              0.4rem 0.75rem;
+          }
+
+
+          .hero-btn-lg {
+            width: 100%;
+
+            max-width: 280px;
+          }
+
+        }
+
       `}</style>
+
     </div>
   );
 }

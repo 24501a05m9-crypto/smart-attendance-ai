@@ -1,363 +1,946 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  BarChart3, 
-  CalendarClock, 
-  History, 
-  HelpCircle, 
-  Home, 
-  ShieldCheck, 
-  Menu, 
-  X, 
-  Activity 
+import React, { useState } from 'react';
+
+import {
+  Menu,
+  X,
+  Home,
+  ClipboardList,
+  BarChart3,
+  SlidersHorizontal,
+  History,
+  CircleHelp,
+  Sparkles
 } from 'lucide-react';
-import { checkHealth } from '../services/api';
 
-export default function Navbar({ activeTab, setActiveTab, hasPredictionData }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [systemStatus, setSystemStatus] = useState('checking'); // 'online' | 'degraded' | 'offline'
+export default function Navbar({
+  activeTab,
+  setActiveTab,
+  hasPredictionData
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const verifyHealth = async () => {
-      try {
-        const res = await checkHealth();
-        if (res.status === 'ok' && res.ml_service?.model_loaded) {
-          setSystemStatus('online');
-        } else {
-          setSystemStatus('degraded');
-        }
-      } catch (e) {
-        setSystemStatus('offline');
-      }
-    };
-    verifyHealth();
-    const interval = setInterval(verifyHealth, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleNavigation = (tab) => {
+    if (tab === 'dashboard' && !hasPredictionData) {
+      return;
+    }
 
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'input', label: 'Attendance Input', icon: CalendarClock },
-    { id: 'dashboard', label: 'Prediction Dashboard', icon: BarChart3, disabled: !hasPredictionData },
-    { id: 'leave', label: 'Leave Simulator', icon: Sparkles },
-    { id: 'history', label: 'History', icon: History },
-    { id: 'about', label: 'About ML', icon: HelpCircle },
-  ];
+    if (tab === 'leave' && !hasPredictionData) {
+      return;
+    }
 
-  const handleNavClick = (id) => {
-    setActiveTab(id);
-    setMobileMenuOpen(false);
+    setActiveTab(tab);
+    setMenuOpen(false);
   };
 
   return (
-    <header className="navbar-header">
-      <div className="navbar-container">
-        {/* Brand */}
-        <div className="navbar-brand" onClick={() => handleNavClick('home')}>
-          <div className="brand-icon-wrapper">
-            <Sparkles className="brand-icon" size={22} />
-          </div>
-          <div className="brand-text-group">
-            <span className="brand-title">SMART ATTENDANCE <span className="highlight-ai">AI</span></span>
-            <span className="brand-subtitle">Random Forest ML Regressor</span>
-          </div>
-        </div>
+    <>
+      {/* =================================================
+          TOP NAVBAR
+      ================================================= */}
 
-        {/* System Status & No-Login Badge (Desktop) */}
-        <div className="navbar-badges desktop-only">
-          <div className="no-login-badge">
-            <ShieldCheck size={14} className="badge-icon-shield" />
-            <span>No Login Required</span>
-          </div>
+      <header className="main-navbar">
 
-          <div className={`status-pill status-${systemStatus}`} title={`System Status: ${systemStatus}`}>
-            <span className="status-dot"></span>
-            <span className="status-text">
-              {systemStatus === 'online' ? 'ML Engine Online' : systemStatus === 'degraded' ? 'Degraded' : 'Connecting...'}
-            </span>
-          </div>
-        </div>
+        <div className="navbar-left">
 
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav desktop-only">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                disabled={item.disabled}
-                className={`nav-link ${isActive ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
-                title={item.disabled ? 'Enter attendance first to view predictions' : ''}
-              >
-                <Icon size={16} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+          <button
+            type="button"
+            className="menu-button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={23} />
+          </button>
 
-        {/* Mobile Hamburger Toggle */}
-        <button 
-          className="mobile-menu-btn mobile-only" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle Navigation Menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="navbar-brand"
+            onClick={() => handleNavigation('home')}
+          >
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="mobile-drawer mobile-only animate-fade-in">
-          <div className="mobile-drawer-badges">
-            <div className="no-login-badge">
-              <ShieldCheck size={14} />
-              <span>No Login Required • Direct Access</span>
+            <div className="brand-icon">
+              <Sparkles size={22} />
             </div>
-            <div className={`status-pill status-${systemStatus}`}>
-              <span className="status-dot"></span>
-              <span>{systemStatus === 'online' ? 'ML Engine Online' : 'Connecting...'}</span>
-            </div>
-          </div>
 
-          <nav className="mobile-nav-list">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  disabled={item.disabled}
-                  className={`mobile-nav-link ${isActive ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+            <div className="brand-text">
+              <div className="brand-title">
+                SMART ATTENDANCE <span>AI</span>
+              </div>
+              <div className="brand-tagline">
+                Face the future of attendance
+              </div>
+            </div>
+
+          </button>
+
         </div>
+
+      </header>
+
+
+      {/* =================================================
+          OVERLAY
+      ================================================= */}
+
+      {menuOpen && (
+        <div
+          className="menu-overlay"
+          onClick={() => setMenuOpen(false)}
+        />
       )}
 
+
+      {/* =================================================
+          NAVIGATION DRAWER
+      ================================================= */}
+
+      <aside
+        className={`navigation-drawer ${
+          menuOpen ? 'navigation-drawer-open' : ''
+        }`}
+      >
+
+        {/* Drawer Header */}
+
+        <div className="drawer-header">
+
+          <div className="drawer-brand">
+
+            <div className="drawer-brand-icon">
+              <Sparkles size={18} />
+            </div>
+
+            <div className="drawer-brand-text">
+              <div className="drawer-title">
+                SMART ATTENDANCE <span>AI</span>
+              </div>
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            className="drawer-close"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close navigation menu"
+          >
+            <X size={21} />
+          </button>
+
+        </div>
+
+
+        {/* Navigation Items */}
+
+        <nav className="drawer-navigation">
+
+          {/* Home */}
+
+          <button
+            type="button"
+            className={`drawer-item ${
+              activeTab === 'home'
+                ? 'drawer-item-active'
+                : ''
+            }`}
+            onClick={() => handleNavigation('home')}
+          >
+            <Home size={19} />
+            <span>Home</span>
+          </button>
+
+
+          {/* Attendance Input */}
+
+          <button
+            type="button"
+            className={`drawer-item ${
+              activeTab === 'input'
+                ? 'drawer-item-active'
+                : ''
+            }`}
+            onClick={() => handleNavigation('input')}
+          >
+            <ClipboardList size={19} />
+            <span>Attendance Input</span>
+          </button>
+
+
+          {/* Prediction Dashboard */}
+
+          <button
+            type="button"
+            disabled={!hasPredictionData}
+            className={`drawer-item ${
+              activeTab === 'dashboard'
+                ? 'drawer-item-active'
+                : ''
+            } ${
+              !hasPredictionData
+                ? 'drawer-item-disabled'
+                : ''
+            }`}
+            onClick={() => handleNavigation('dashboard')}
+          >
+            <BarChart3 size={19} />
+            <span>Prediction Dashboard</span>
+          </button>
+
+
+          {/* Leave Simulator */}
+
+          <button
+            type="button"
+            disabled={!hasPredictionData}
+            className={`drawer-item ${
+              activeTab === 'leave'
+                ? 'drawer-item-active'
+                : ''
+            } ${
+              !hasPredictionData
+                ? 'drawer-item-disabled'
+                : ''
+            }`}
+            onClick={() => handleNavigation('leave')}
+          >
+            <SlidersHorizontal size={19} />
+            <span>Leave Simulator</span>
+          </button>
+
+
+          {/* History */}
+
+          <button
+            type="button"
+            className={`drawer-item ${
+              activeTab === 'history'
+                ? 'drawer-item-active'
+                : ''
+            }`}
+            onClick={() => handleNavigation('history')}
+          >
+            <History size={19} />
+            <span>History</span>
+          </button>
+
+
+          {/* About ML */}
+
+          <button
+            type="button"
+            className={`drawer-item ${
+              activeTab === 'about'
+                ? 'drawer-item-active'
+                : ''
+            }`}
+            onClick={() => handleNavigation('about')}
+          >
+            <CircleHelp size={19} />
+            <span>About ML</span>
+          </button>
+
+        </nav>
+
+
+        {/* Drawer Footer */}
+
+        <div className="drawer-footer">
+          Smart Attendance Prediction System
+        </div>
+
+      </aside>
+
+
+      {/* =================================================
+          NAVBAR STYLES
+      ================================================= */}
+
       <style>{`
-        .navbar-header {
+
+        /* ================================================
+           TOP NAVBAR
+        ================================================ */
+
+        .main-navbar {
           position: sticky;
+
           top: 0;
-          z-index: 100;
-          background: rgba(9, 13, 22, 0.85);
-          backdrop-filter: blur(16px);
-          border-bottom: 1px solid var(--border-subtle);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-        .navbar-container {
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0.85rem 1.5rem;
+
+          z-index: 1000;
+
+          width: 100%;
+
+          height: 76px;
+
           display: flex;
+
           align-items: center;
-          justify-content: space-between;
-          gap: 1.5rem;
+
+          padding: 0 1.5rem;
+
+          box-sizing: border-box;
+
+          background: rgba(255, 255, 255, 0.94);
+
+          border-bottom:
+            1px solid var(--border-subtle);
+
+          box-shadow:
+            0 3px 14px rgba(15, 23, 42, 0.055);
+
+          backdrop-filter: blur(14px);
         }
+
+
+        /* ================================================
+           LEFT SIDE
+        ================================================ */
+
+        .navbar-left {
+          display: flex;
+
+          align-items: center;
+
+          gap: 0.9rem;
+        }
+
+
+        /* ================================================
+           MENU BUTTON
+        ================================================ */
+
+        .menu-button {
+          width: 43px;
+
+          height: 43px;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          padding: 0;
+
+          border:
+            1px solid #D7DEE7;
+
+          border-radius: 10px;
+
+          background: #FFFFFF;
+
+          color: #0F172A;
+
+          cursor: pointer;
+
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+
+        .menu-button:hover {
+          background: #DFF3FA;
+
+          border-color: #A9DDEA;
+
+          color: #0F172A;
+
+          transform: translateY(-1px);
+
+          box-shadow:
+            0 4px 12px rgba(56, 189, 248, 0.12);
+        }
+
+
+        .menu-button:active {
+          transform: translateY(0);
+        }
+
+
+        /* ================================================
+           BRAND
+        ================================================ */
+
         .navbar-brand {
           display: flex;
+
           align-items: center;
-          gap: 0.75rem;
+
+          gap: 0.7rem;
+
+          padding: 0;
+
+          border: none;
+
+          background: transparent;
+
+          color: inherit;
+
           cursor: pointer;
-          user-select: none;
-        }
-        .brand-icon-wrapper {
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.3));
-          border: 1px solid rgba(56, 189, 248, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-        }
-        .brand-icon {
-          color: var(--primary);
-        }
-        .brand-text-group {
-          display: flex;
-          flex-direction: column;
-        }
-        .brand-title {
-          font-family: var(--font-heading);
-          font-size: 1.15rem;
-          font-weight: 800;
-          letter-spacing: -0.01em;
-          color: var(--text-main);
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-        }
-        .highlight-ai {
-          background: linear-gradient(90deg, #38BDF8, #818CF8);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .brand-subtitle {
-          font-size: 0.7rem;
-          color: var(--text-muted);
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
-        .navbar-badges {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .no-login-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          padding: 0.3rem 0.65rem;
-          background: rgba(56, 189, 248, 0.08);
-          border: 1px solid rgba(56, 189, 248, 0.25);
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--primary);
-        }
-        .badge-icon-shield {
-          color: #38BDF8;
-        }
-        .status-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          padding: 0.3rem 0.65rem;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 600;
-        }
-        .status-online {
-          background: rgba(16, 185, 129, 0.1);
-          color: #10B981;
-          border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        .status-online .status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #10B981;
-          box-shadow: 0 0 8px #10B981;
-        }
-        .status-degraded, .status-checking {
-          background: rgba(245, 158, 11, 0.1);
-          color: #F59E0B;
-          border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-        .status-degraded .status-dot, .status-checking .status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #F59E0B;
-        }
-        .status-offline {
-          background: rgba(239, 68, 68, 0.1);
-          color: #EF4444;
-          border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-        .status-offline .status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #EF4444;
-        }
-        .desktop-nav {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-        }
-        .nav-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          padding: 0.55rem 0.9rem;
-          background: transparent;
-          color: var(--text-muted);
-          border-radius: var(--radius-sm);
-          font-size: 0.88rem;
-          font-weight: 500;
-          border: 1px solid transparent;
-        }
-        .nav-link:hover:not(:disabled) {
-          color: var(--text-main);
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .nav-link.active {
-          color: #FFFFFF;
-          background: rgba(56, 189, 248, 0.12);
-          border-color: rgba(56, 189, 248, 0.3);
-        }
-        .nav-link.disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-        .mobile-menu-btn {
-          background: transparent;
-          color: var(--text-main);
-          padding: 0.4rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .mobile-drawer {
-          background: #0D1424;
-          border-bottom: 1px solid var(--border-subtle);
-          padding: 1.25rem 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        .mobile-drawer-badges {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          padding-bottom: 0.75rem;
-          border-bottom: 1px solid var(--border-card);
-        }
-        .mobile-nav-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-        .mobile-nav-link {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: var(--radius-sm);
-          color: var(--text-muted);
-          font-size: 0.95rem;
+
           text-align: left;
+        }
+
+
+        /* ================================================
+           BRAND ICON
+        ================================================ */
+
+        .brand-icon {
+          width: 42px;
+
+          height: 42px;
+
+          flex-shrink: 0;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          border-radius: 11px;
+
+          background:
+            linear-gradient(
+              135deg,
+              #DFF3FA 0%,
+              #FFFFFF 55%,
+              #FBEDE6 100%
+            );
+
+          border:
+            1px solid #C9E6EE;
+
+          color: #0F172A;
+
+          box-shadow:
+            0 3px 10px rgba(15, 23, 42, 0.06);
+
+          transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+
+        .navbar-brand:hover .brand-icon {
+          transform: translateY(-1px);
+
+          box-shadow:
+            0 5px 14px rgba(15, 23, 42, 0.09);
+        }
+
+
+        /* ================================================
+           BRAND TEXT
+        ================================================ */
+
+        .brand-text {
+          display: flex;
+
+          flex-direction: column;
+
+          align-items: flex-start;
+        }
+
+
+        .brand-title {
+          color: #0F172A;
+
+          font-family:
+            var(--font-heading);
+
+          font-size: 1rem;
+
+          font-weight: 800;
+
+          line-height: 1.1;
+
+          letter-spacing: 0.015em;
+
+          white-space: nowrap;
+        }
+
+
+        .brand-title span {
+          color: #0F172A;
+
+          font-weight: 900;
+        }
+
+
+        .brand-tagline {
+          color: #64748B;
+
+          font-size: 0.72rem;
+
+          font-weight: 500;
+
+          line-height: 1.25;
+        }
+
+
+        /* ================================================
+           OVERLAY
+        ================================================ */
+
+        .menu-overlay {
+          position: fixed;
+
+          inset: 0;
+
+          z-index: 1998;
+
+          background:
+            rgba(15, 23, 42, 0.28);
+
+          backdrop-filter: blur(2px);
+
+          animation:
+            menu-fade-in 0.2s ease;
+        }
+
+
+        /* ================================================
+           DRAWER
+        ================================================ */
+
+        .navigation-drawer {
+          position: fixed;
+
+          top: 0;
+
+          left: 0;
+
+          z-index: 1999;
+
+          width: 300px;
+
+          height: 100vh;
+
+          display: flex;
+
+          flex-direction: column;
+
+          box-sizing: border-box;
+
+          background: #FFFFFF;
+
+          border-right:
+            1px solid var(--border-subtle);
+
+          box-shadow:
+            15px 0 45px rgba(15, 23, 42, 0.12);
+
+          transform:
+            translateX(-100%);
+
+          transition:
+            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+
+        .navigation-drawer-open {
+          transform:
+            translateX(0);
+        }
+
+
+        /* ================================================
+           DRAWER HEADER
+        ================================================ */
+
+        .drawer-header {
+          height: 76px;
+
+          flex-shrink: 0;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: space-between;
+
+          padding: 0 1.15rem;
+
+          box-sizing: border-box;
+
+          border-bottom:
+            1px solid var(--border-subtle);
+
+          background:
+            linear-gradient(
+              90deg,
+              #FFFFFF 0%,
+              #F9FCFD 100%
+            );
+        }
+
+
+        /* ================================================
+           DRAWER BRAND
+        ================================================ */
+
+        .drawer-brand {
+          display: flex;
+
+          align-items: center;
+
+          gap: 0.65rem;
+        }
+
+
+        .drawer-brand-icon {
+          width: 35px;
+
+          height: 35px;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          border-radius: 9px;
+
+          background:
+            linear-gradient(
+              135deg,
+              #DFF3FA,
+              #FBEDE6
+            );
+
+          border:
+            1px solid #C9E6EE;
+
+          color: #0F172A;
+        }
+
+
+        .drawer-brand-text {
+          display: flex;
+
+          flex-direction: column;
+        }
+
+
+        .drawer-title {
+          color: #0F172A;
+
+          font-family:
+            var(--font-heading);
+
+          font-size: 0.78rem;
+
+          font-weight: 800;
+
+          letter-spacing: 0.01em;
+        }
+
+
+        .drawer-title span {
+          color: #0F172A;
+        }
+
+
+        /* ================================================
+           CLOSE BUTTON
+        ================================================ */
+
+        .drawer-close {
+          width: 38px;
+
+          height: 38px;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          padding: 0;
+
+          border:
+            1px solid transparent;
+
+          border-radius: 9px;
+
+          background: transparent;
+
+          color: #64748B;
+
+          cursor: pointer;
+
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+        }
+
+
+        .drawer-close:hover {
+          background: #FBEDE6;
+
+          border-color: #F2D5C7;
+
+          color: #0F172A;
+        }
+
+
+        /* ================================================
+           NAVIGATION
+        ================================================ */
+
+        .drawer-navigation {
+          display: flex;
+
+          flex-direction: column;
+
+          gap: 0.35rem;
+
+          padding: 1.2rem 0.8rem;
+        }
+
+
+        /* ================================================
+           NAV ITEM
+        ================================================ */
+
+        .drawer-item {
           width: 100%;
+
+          display: flex;
+
+          align-items: center;
+
+          gap: 0.85rem;
+
+          padding:
+            0.78rem 0.9rem;
+
+          box-sizing: border-box;
+
+          border:
+            1px solid transparent;
+
+          border-radius: 10px;
+
+          background: transparent;
+
+          color: #64748B;
+
+          font-family:
+            var(--font-heading);
+
+          font-size: 0.88rem;
+
+          font-weight: 600;
+
+          text-align: left;
+
+          cursor: pointer;
+
+          transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
         }
-        .mobile-nav-link.active {
-          background: rgba(56, 189, 248, 0.15);
-          border-color: rgba(56, 189, 248, 0.3);
-          color: #FFFFFF;
+
+
+        .drawer-item svg {
+          flex-shrink: 0;
+
+          transition:
+            color 0.2s ease,
+            transform 0.2s ease;
         }
-        .mobile-nav-link.disabled {
-          opacity: 0.4;
+
+
+        /* ================================================
+           NAV HOVER
+        ================================================ */
+
+        .drawer-item:hover:not(:disabled) {
+          background: #F0F9FC;
+
+          color: #0F172A;
+
+          border-color: #D5EDF3;
+
+          transform: translateX(2px);
+        }
+
+
+        .drawer-item:hover:not(:disabled) svg {
+          color: #0F172A;
+
+          transform: scale(1.04);
+        }
+
+
+        /* ================================================
+           ACTIVE ITEM
+        ================================================ */
+
+        .drawer-item-active {
+          background:
+            linear-gradient(
+              90deg,
+              #DFF3FA 0%,
+              #EEF9FC 100%
+            );
+
+          border-color: #BDE3EC;
+
+          color: #0F172A;
+
+          box-shadow:
+            0 3px 10px rgba(56, 189, 248, 0.08);
+        }
+
+
+        .drawer-item-active svg {
+          color: #0F172A;
+        }
+
+
+        .drawer-item-active:hover {
+          background:
+            linear-gradient(
+              90deg,
+              #D6F0F7 0%,
+              #EAF8FC 100%
+            );
+
+          color: #0F172A;
+
+          border-color: #A9DDEA;
+
+          transform: translateX(2px);
+        }
+
+
+        /* ================================================
+           DISABLED ITEMS
+        ================================================ */
+
+        .drawer-item:disabled,
+        .drawer-item-disabled {
+          opacity: 0.42;
+
+          color: #94A3B8;
+
           cursor: not-allowed;
+
+          transform: none !important;
         }
-        @media (min-width: 992px) {
-          .mobile-only { display: none !important; }
+
+
+        .drawer-item:disabled svg,
+        .drawer-item-disabled svg {
+          color: #94A3B8;
         }
-        @media (max-width: 991px) {
-          .desktop-only { display: none !important; }
+
+
+        /* ================================================
+           DRAWER FOOTER
+        ================================================ */
+
+        .drawer-footer {
+          margin-top: auto;
+
+          padding: 1.2rem;
+
+          border-top:
+            1px solid var(--border-subtle);
+
+          background:
+            linear-gradient(
+              90deg,
+              #FFFFFF,
+              #FCF8F6
+            );
+
+          color: #94A3B8;
+
+          font-size: 0.65rem;
+
+          line-height: 1.5;
         }
+
+
+        /* ================================================
+           ANIMATION
+        ================================================ */
+
+        @keyframes menu-fade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+
+        /* ================================================
+           MOBILE
+        ================================================ */
+
+        @media (max-width: 600px) {
+
+          .main-navbar {
+            height: 70px;
+
+            padding: 0 1rem;
+          }
+
+
+          .menu-button {
+            width: 40px;
+
+            height: 40px;
+          }
+
+
+          .brand-icon {
+            width: 38px;
+
+            height: 38px;
+          }
+
+
+          .brand-title {
+            font-size: 0.88rem;
+          }
+
+
+          .navigation-drawer {
+            width: 285px;
+          }
+
+
+          .drawer-header {
+            height: 70px;
+          }
+
+        }
+
+
+        @media (max-width: 380px) {
+
+          .brand-title {
+            font-size: 0.80rem;
+          }
+
+        }
+
       `}</style>
-    </header>
+    </>
   );
 }
