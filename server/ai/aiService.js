@@ -1,3 +1,4 @@
+```js
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 
@@ -42,19 +43,49 @@ ${message}
 Give only the concise answer.
 `;
 
-    const interaction = await ai.interactions.create({
+    const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash',
-      input: prompt
+      contents: prompt,
+      config: {
+        thinkingConfig: {
+          thinkingLevel: 'low'
+        }
+      }
     });
+
+    const answer = response.text?.trim();
+
+    if (!answer) {
+      throw new Error('Gemini returned an empty response.');
+    }
 
     console.log(
       `[Synapse AI] Gemini response time: ${Date.now() - startTime} ms`
     );
 
-    return interaction.output_text;
+    return answer;
 
   } catch (error) {
-    console.error('Synapse Gemini error:', error.message);
+    console.error(
+      'Synapse Gemini error:',
+      error?.message || error
+    );
+
     throw new Error('Synapse AI is currently unavailable. Please try again.');
   }
 };
+```
+
+Then:
+
+```powershell
+git add server/ai/aiService.js
+git commit -m "Fix Synapse Gemini API call"
+git push origin ai-integration
+```
+
+After Vercel redeploys, test Synapse again with:
+
+> Which subject needs attention?
+
+This remove
