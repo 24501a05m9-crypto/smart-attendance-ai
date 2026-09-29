@@ -1,4 +1,3 @@
-```js
 import dotenv from 'dotenv';
 import Groq from 'groq-sdk';
 
@@ -74,4 +73,3 @@ ${message}
     );
   }
 };
-```
