@@ -38,23 +38,43 @@ Student question:
 ${message}
 `;
 
-    const completion = await groq.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 150
-    });
+    let answer = '';
 
-    const answer =
-      completion?.choices?.[0]?.message?.content?.trim();
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const completion = await groq.chat.completions.create({
+          model: MODEL,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 200
+        });
+
+        answer =
+          completion?.choices?.[0]?.message?.content?.trim() || '';
+
+        if (answer) {
+          break;
+        }
+
+        console.warn(
+          `[Synapse AI] Groq returned empty response on attempt ${attempt}.`
+        );
+
+      } catch (error) {
+        console.warn(
+          `[Synapse AI] Groq attempt ${attempt} failed:`,
+          error?.message || error
+        );
+      }
+    }
 
     if (!answer) {
-      throw new Error('Groq returned an empty response.');
+      throw new Error('Groq returned an empty response after retry.');
     }
 
     console.log(
@@ -62,6 +82,7 @@ ${message}
     );
 
     return answer;
+
   } catch (error) {
     console.error(
       'Synapse Groq error:',
