@@ -1,13 +1,22 @@
+```js
 import dotenv from 'dotenv';
+import Groq from 'groq-sdk';
 
 dotenv.config();
 
-const OLLAMA_URL = 'http://127.0.0.1:11434/api/chat';
-const MODEL = 'llama3.2:latest';
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
+});
+
+const MODEL = 'llama-3.3-70b-versatile';
 
 export const generateSynapseResponse = async (message, context) => {
   try {
     const startTime = Date.now();
+
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not configured.');
+    }
 
     const prompt = `
 You are Synapse AI, the attendance assistant inside a college attendance system.
@@ -30,44 +39,33 @@ Student question:
 ${message}
 `;
 
-    const response = await fetch(OLLAMA_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        stream: false
-      })
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 150
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Ollama error: ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    const answer = data?.message?.content?.trim();
+    const answer =
+      completion?.choices?.[0]?.message?.content?.trim();
 
     if (!answer) {
-      throw new Error('Ollama returned an empty response.');
+      throw new Error('Groq returned an empty response.');
     }
 
     console.log(
-      `[Synapse AI] Ollama response time: ${Date.now() - startTime} ms`
+      `[Synapse AI] Groq response time: ${Date.now() - startTime} ms`
     );
 
     return answer;
   } catch (error) {
     console.error(
-      'Synapse Ollama error:',
+      'Synapse Groq error:',
       error?.message || error
     );
 
@@ -76,3 +74,4 @@ ${message}
     );
   }
 };
+```
