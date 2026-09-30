@@ -104,12 +104,11 @@ export default function LeaveSimulatorView({
     0
   );
 
-  const currentAttendance = Number(
-    currentPrediction?.current_attendance?.overall_attendance ??
-    currentPrediction?.current_attendance?.percentage ??
-    0
-  );
-
+ const currentAttendance = Number(
+  currentPrediction?.current_attendance ??
+  currentPrediction?.feature_summary?.overallAttendance ??
+  0
+);
   const safeLeave = Number(
     currentPrediction?.maximum_safe_leave ??
     activeSim?.maximum_safe_leave ??
