@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import {
   TrendingUp,
   ShieldCheck,
@@ -31,19 +32,30 @@ export default function DashboardView({
   onEditAttendance,
   onOpenLeaveSimulator
 }) {
-  const [showFeatures, setShowFeatures] = useState(false);
+  const [showFeatures, setShowFeatures] =
+    useState(false);
+
+  /*
+   * =====================================================
+   * EMPTY STATE
+   * =====================================================
+   */
 
   if (!predictionData) {
     return (
       <div className="dashboard-empty glass-card">
+
         <div className="empty-icon">
           <TrendingUp size={22} />
         </div>
 
-        <h3>No Prediction Data Found</h3>
+        <h3>
+          No Prediction Data Found
+        </h3>
 
         <p>
-          Please enter your subject attendance data to generate forecasts.
+          Please enter your subject attendance
+          data to generate forecasts.
         </p>
 
         <button
@@ -52,9 +64,16 @@ export default function DashboardView({
         >
           Go to Attendance Input
         </button>
+
       </div>
     );
   }
+
+  /*
+   * =====================================================
+   * BACKEND RESPONSE
+   * =====================================================
+   */
 
   const {
     current_attendance = 0,
@@ -68,82 +87,95 @@ export default function DashboardView({
     leave_trajectory = []
   } = predictionData;
 
-  /* =====================================================
-     FORECAST CHART
-  ===================================================== */
+  /*
+   * =====================================================
+   * FORECAST CHART
+   * =====================================================
+   */
 
   const forecastChartData = [
     {
       name: 'Current',
-      attendance: Number(current_attendance),
+      attendance:
+        Number(current_attendance),
       type: 'Recorded Baseline'
     },
+
     {
       name: 'ML Prediction',
-      attendance: Number(september_prediction),
+      attendance:
+        Number(september_prediction),
       type: 'Random Forest Model'
     },
+
     {
       name: 'Future Projection',
-      attendance: Number(october_forecast),
+      attendance:
+        Number(october_forecast),
       type: 'Future Projection'
     }
   ];
 
-  /* =====================================================
-     LEAVE IMPACT CHART
-  ===================================================== */
+  /*
+   * =====================================================
+   * LEAVE IMPACT CHART
+   * =====================================================
+   *
+   * DO NOT CREATE FAKE VALUES HERE.
+   *
+   * Backend gives:
+   *
+   * classes_missed
+   * attendance_after_leave
+   * predicted_future_attendance
+   * risk_level
+   */
 
-  const leaveChartData = (
-    leave_trajectory.length > 0
-      ? leave_trajectory
-      : [
-          {
-            classes_missed: 0,
-            predicted_future_attendance: september_prediction
-          },
-          {
-            classes_missed: 1,
-            predicted_future_attendance: september_prediction - 1.2
-          },
-          {
-            classes_missed: 2,
-            predicted_future_attendance: september_prediction - 2.5
-          },
-          {
-            classes_missed: 3,
-            predicted_future_attendance: september_prediction - 3.8
-          },
-          {
-            classes_missed: 4,
-            predicted_future_attendance: september_prediction - 5.1
-          },
-          {
-            classes_missed: 5,
-            predicted_future_attendance: september_prediction - 6.5
-          }
-        ]
-  ).map((pt) => ({
-    classes_missed: `${pt.classes_missed} Missed`,
-    classesCount: pt.classes_missed,
-    predicted: Number(pt.predicted_future_attendance),
-    immediate: Number(
-      pt.attendance_after_leave ||
-      pt.predicted_future_attendance
-    )
-  }));
+  const leaveChartData =
+    Array.isArray(leave_trajectory)
+      ? leave_trajectory.map((pt) => ({
+          classes_missed:
+            Number(
+              pt?.classes_missed ?? 0
+            ),
 
-  /* =====================================================
-     RISK BADGE
-  ===================================================== */
+          predicted:
+            Number(
+              pt?.predicted_future_attendance ??
+              pt?.attendance_after_leave ??
+              0
+            ),
+
+          immediate:
+            Number(
+              pt?.attendance_after_leave ??
+              pt?.predicted_future_attendance ??
+              0
+            ),
+
+          risk:
+            pt?.risk_level ||
+            'At Risk'
+        }))
+      : [];
+
+  /*
+   * =====================================================
+   * RISK BADGE
+   * =====================================================
+   */
 
   const getRiskBadge = (risk) => {
+
     switch (risk) {
+
       case 'Safe':
         return (
           <span className="badge badge-safe">
             <ShieldCheck size={14} />
-            <span>Safe ≥ 75%</span>
+            <span>
+              Safe ≥ 75%
+            </span>
           </span>
         );
 
@@ -151,7 +183,9 @@ export default function DashboardView({
         return (
           <span className="badge badge-risk">
             <AlertTriangle size={14} />
-            <span>At Risk 65–74%</span>
+            <span>
+              At Risk 65–74%
+            </span>
           </span>
         );
 
@@ -159,26 +193,37 @@ export default function DashboardView({
         return (
           <span className="badge badge-high-risk">
             <AlertOctagon size={14} />
-            <span>High Risk &lt; 65%</span>
+            <span>
+              High Risk &lt; 65%
+            </span>
           </span>
         );
     }
   };
 
+  /*
+   * =====================================================
+   * RENDER
+   * =====================================================
+   */
+
   return (
     <div className="dashboard-container animate-fade-in">
 
-      {/* =====================================================
+      {/* =================================================
           HEADER
-      ===================================================== */}
+      ================================================= */}
 
       <div className="dashboard-header">
 
         <div>
 
           <div className="dashboard-kicker">
+
             <span className="dashboard-kicker-dot"></span>
+
             Prediction Dashboard
+
           </div>
 
           <h2 className="dashboard-title">
@@ -186,10 +231,12 @@ export default function DashboardView({
           </h2>
 
           <p className="dashboard-subtitle">
-            Current attendance, ML prediction and leave analysis
+            Current attendance, ML prediction
+            and leave analysis
           </p>
 
         </div>
+
 
         <div className="dashboard-actions">
 
@@ -198,28 +245,34 @@ export default function DashboardView({
             onClick={onEditAttendance}
           >
             <Edit3 size={14} />
-            <span>Edit Attendance</span>
+            <span>
+              Edit Attendance
+            </span>
           </button>
+
 
           <button
             className="btn-primary btn-sm"
             onClick={onOpenLeaveSimulator}
           >
             <SlidersHorizontal size={14} />
-            <span>Leave Simulator</span>
+            <span>
+              Leave Simulator
+            </span>
           </button>
 
         </div>
 
       </div>
 
-      {/* =====================================================
+
+      {/* =================================================
           KPI CARDS
-      ===================================================== */}
+      ================================================= */}
 
       <div className="kpi-grid">
 
-        {/* CURRENT */}
+        {/* CURRENT ATTENDANCE */}
 
         <div className="glass-card kpi-card">
 
@@ -235,13 +288,18 @@ export default function DashboardView({
 
           </div>
 
+
           <div className="kpi-value-row">
 
             <span className="kpi-number">
-              {Number(current_attendance).toFixed(1)}%
+              {Number(
+                current_attendance
+              ).toFixed(1)}
+              %
             </span>
 
           </div>
+
 
           <div className="progress-bar-track">
 
@@ -256,19 +314,30 @@ export default function DashboardView({
               style={{
                 width: `${Math.min(
                   100,
-                  Math.max(0, current_attendance)
+                  Math.max(
+                    0,
+                    Number(
+                      current_attendance
+                    )
+                  )
                 )}%`
               }}
             />
 
           </div>
 
+
           <span className="kpi-caption">
-            {feature_summary.totalAttended || 0} /{' '}
-            {feature_summary.totalConducted || 0} classes attended
+
+            {feature_summary.totalAttended || 0}
+            {' / '}
+            {feature_summary.totalConducted || 0}
+            {' '}classes attended
+
           </span>
 
         </div>
+
 
         {/* ML PREDICTION */}
 
@@ -286,43 +355,73 @@ export default function DashboardView({
 
           </div>
 
+
           <div className="kpi-value-row">
 
             <span className="kpi-number text-blue">
-              {Number(september_prediction).toFixed(1)}%
+
+              {Number(
+                september_prediction
+              ).toFixed(1)}
+              %
+
             </span>
 
+
             <div className="forecast-icon blue-icon">
+
               <TrendingUp size={19} />
+
             </div>
 
           </div>
+
 
           <div className="kpi-delta">
 
             <span
               className={
-                september_prediction >= current_attendance
+                Number(
+                  september_prediction
+                ) >= Number(
+                  current_attendance
+                )
                   ? 'delta-positive'
                   : 'delta-negative'
               }
             >
-              {september_prediction >= current_attendance
+
+              {Number(
+                september_prediction
+              ) >= Number(
+                current_attendance
+              )
                 ? '▲ +'
                 : '▼ '}
+
               {Math.abs(
-                september_prediction - current_attendance
+                Number(
+                  september_prediction
+                ) -
+                Number(
+                  current_attendance
+                )
               ).toFixed(1)}
+
               % vs Current
+
             </span>
 
           </div>
 
+
           <span className="kpi-caption">
-            Trained Random Forest Model (300 estimators)
+            Trained Random Forest Model
+            (300 estimators)
           </span>
 
         </div>
+
 
         {/* FUTURE PROJECTION */}
 
@@ -340,13 +439,21 @@ export default function DashboardView({
 
           </div>
 
+
           <div className="kpi-value-row">
 
             <span className="kpi-number text-peach">
-              {Number(october_forecast).toFixed(1)}%
+
+              {Number(
+                october_forecast
+              ).toFixed(1)}
+
+              %
+
             </span>
 
           </div>
+
 
           <div className="kpi-disclaimer-pill">
 
@@ -358,11 +465,14 @@ export default function DashboardView({
 
           </div>
 
+
           <span className="kpi-caption">
-            Not trained/validated on actual future targets
+            Not trained/validated on actual
+            future targets
           </span>
 
         </div>
+
 
         {/* RISK */}
 
@@ -380,22 +490,32 @@ export default function DashboardView({
 
           </div>
 
+
           <div className="kpi-value-row">
-            {getRiskBadge(risk_level)}
+
+            {getRiskBadge(
+              risk_level
+            )}
+
           </div>
+
 
           <div className="risk-rule-explanation">
-            Risk level is determined using attendance
-            thresholds after the ML prediction.
+            Risk level is determined using
+            attendance thresholds after the
+            ML prediction.
           </div>
 
+
           <span className="kpi-caption">
-            Safe ≥ 75% | At Risk 65–74% | High Risk &lt; 65%
+            Safe ≥ 75% | At Risk 65–74%
+            | High Risk &lt; 65%
           </span>
 
         </div>
 
-        {/* MAX SAFE LEAVE */}
+
+        {/* MAXIMUM SAFE LEAVE */}
 
         <div className="glass-card kpi-card safe-leave-card">
 
@@ -411,11 +531,14 @@ export default function DashboardView({
 
           </div>
 
+
           <div className="kpi-value-row">
 
             <span className="kpi-number text-emerald">
 
-              {maximum_safe_leave}
+              {Number(
+                maximum_safe_leave
+              )}
 
               <span className="classes-label">
                 Classes
@@ -425,26 +548,36 @@ export default function DashboardView({
 
           </div>
 
+
           <p className="safe-leave-text">
+
             {max_safe_leave_message ||
-              `You can safely miss up to ${maximum_safe_leave} classes based on the current forecast.`}
+              `You can safely miss up to ${
+                maximum_safe_leave
+              } classes based on the current forecast.`}
+
           </p>
 
+
           <span className="kpi-caption">
-            Based on the model forecast maintaining ≥ 75%.
+            Based on the model forecast
+            maintaining ≥ 75%.
           </span>
 
         </div>
 
       </div>
 
-      {/* =====================================================
+
+      {/* =================================================
           CHARTS
-      ===================================================== */}
+      ================================================= */}
 
       <div className="charts-grid">
 
-        {/* ATTENDANCE FORECAST */}
+        {/* =================================================
+            ATTENDANCE FORECAST
+        ================================================= */}
 
         <div className="glass-card chart-card">
 
@@ -457,12 +590,14 @@ export default function DashboardView({
               </h3>
 
               <p className="chart-desc">
-                Current attendance vs ML prediction and future projection
+                Current attendance vs ML prediction
+                and future projection
               </p>
 
             </div>
 
           </div>
+
 
           <div className="chart-wrapper">
 
@@ -487,6 +622,7 @@ export default function DashboardView({
                   vertical={false}
                 />
 
+
                 <XAxis
                   dataKey="name"
                   stroke="#94A3B8"
@@ -496,8 +632,9 @@ export default function DashboardView({
                   }}
                 />
 
+
                 <YAxis
-                  domain={[50, 100]}
+                  domain={[0, 100]}
                   stroke="#94A3B8"
                   tick={{
                     fill: '#64748B',
@@ -505,6 +642,7 @@ export default function DashboardView({
                   }}
                   unit="%"
                 />
+
 
                 <Tooltip
                   contentStyle={{
@@ -514,18 +652,30 @@ export default function DashboardView({
                     boxShadow:
                       '0 8px 25px rgba(15, 23, 42, 0.10)'
                   }}
+
                   labelStyle={{
                     color: '#0F172A',
                     fontWeight: 700
                   }}
+
                   itemStyle={{
                     color: '#334155'
                   }}
-                  formatter={(val, name, item) => [
-                    `${val}%`,
-                    item.payload.type
+
+                  formatter={(
+                    value,
+                    name,
+                    item
+                  ) => [
+                    `${Number(
+                      value
+                    ).toFixed(2)}%`,
+                    item?.payload?.type ||
+                      'Attendance'
                   ]}
+
                 />
+
 
                 <ReferenceLine
                   y={75}
@@ -535,9 +685,11 @@ export default function DashboardView({
                     value: '75% Safe',
                     fill: '#059669',
                     fontSize: 10,
-                    position: 'insideTopRight'
+                    position:
+                      'insideTopRight'
                   }}
                 />
+
 
                 <ReferenceLine
                   y={65}
@@ -547,9 +699,11 @@ export default function DashboardView({
                     value: '65% Critical',
                     fill: '#DC2626',
                     fontSize: 10,
-                    position: 'insideBottomRight'
+                    position:
+                      'insideBottomRight'
                   }}
                 />
+
 
                 <Line
                   type="monotone"
@@ -578,7 +732,10 @@ export default function DashboardView({
 
         </div>
 
-        {/* LEAVE IMPACT */}
+
+        {/* =================================================
+            LEAVE IMPACT
+        ================================================= */}
 
         <div className="glass-card chart-card">
 
@@ -591,143 +748,213 @@ export default function DashboardView({
               </h3>
 
               <p className="chart-desc">
-                Predicted future attendance as classes missed increases
+                Predicted future attendance as
+                classes missed increase
               </p>
 
             </div>
+
 
             <button
               className="btn-secondary btn-sm"
               onClick={onOpenLeaveSimulator}
             >
-              <span>Open Simulator</span>
+
+              <span>
+                Open Simulator
+              </span>
+
               <ArrowRight size={14} />
+
             </button>
 
           </div>
 
-          <div className="chart-wrapper">
 
-            <ResponsiveContainer
-              width="100%"
-              height={260}
-            >
+          {leaveChartData.length > 0 ? (
 
-              <AreaChart
-                data={leaveChartData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 0,
-                  bottom: 10
-                }}
+            <div className="chart-wrapper">
+
+              <ResponsiveContainer
+                width="100%"
+                height={260}
               >
 
-                <defs>
-
-                  <linearGradient
-                    id="leaveImpactGrad"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-
-                    <stop
-                      offset="5%"
-                      stopColor="#38BDF8"
-                      stopOpacity={0.28}
-                    />
-
-                    <stop
-                      offset="95%"
-                      stopColor="#FBEDE6"
-                      stopOpacity={0}
-                    />
-
-                  </linearGradient>
-
-                </defs>
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#E3E8EE"
-                  vertical={false}
-                />
-
-                <XAxis
-                  dataKey="classes_missed"
-                  stroke="#94A3B8"
-                  tick={{
-                    fill: '#64748B',
-                    fontSize: 10
+                <AreaChart
+                  data={leaveChartData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 0,
+                    bottom: 10
                   }}
-                />
+                >
 
-                <YAxis
-                  domain={[50, 100]}
-                  stroke="#94A3B8"
-                  tick={{
-                    fill: '#64748B',
-                    fontSize: 11
-                  }}
-                  unit="%"
-                />
+                  <defs>
 
-                <Tooltip
-                  contentStyle={{
-                    background: '#FFFFFF',
-                    border: '1px solid #E3E8EE',
-                    borderRadius: '10px',
-                    boxShadow:
-                      '0 8px 25px rgba(15, 23, 42, 0.10)'
-                  }}
-                  labelStyle={{
-                    color: '#0F172A',
-                    fontWeight: 700
-                  }}
-                  itemStyle={{
-                    color: '#334155'
-                  }}
-                  formatter={(val) => [
-                    `${val}%`,
-                    'Predicted Future Attendance'
-                  ]}
-                />
+                    <linearGradient
+                      id="leaveImpactGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
 
-                <ReferenceLine
-                  y={75}
-                  stroke="#10B981"
-                  strokeDasharray="4 4"
-                  label={{
-                    value: '75% Cutoff',
-                    fill: '#059669',
-                    fontSize: 10
-                  }}
-                />
+                      <stop
+                        offset="5%"
+                        stopColor="#38BDF8"
+                        stopOpacity={0.28}
+                      />
 
-                <Area
-                  type="monotone"
-                  dataKey="predicted"
-                  stroke="#0EA5E9"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#leaveImpactGrad)"
-                />
+                      <stop
+                        offset="95%"
+                        stopColor="#FBEDE6"
+                        stopOpacity={0}
+                      />
 
-              </AreaChart>
+                    </linearGradient>
 
-            </ResponsiveContainer>
+                  </defs>
 
-          </div>
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#E3E8EE"
+                    vertical={false}
+                  />
+
+
+                  <XAxis
+                    dataKey="classes_missed"
+                    stroke="#94A3B8"
+                    tick={{
+                      fill: '#64748B',
+                      fontSize: 10
+                    }}
+                    label={{
+                      value: 'Classes Missed',
+                      position:
+                        'insideBottom',
+                      offset: -5,
+                      fill: '#64748B',
+                      fontSize: 11
+                    }}
+                  />
+
+
+                  <YAxis
+                    domain={[0, 100]}
+                    stroke="#94A3B8"
+                    tick={{
+                      fill: '#64748B',
+                      fontSize: 11
+                    }}
+                    unit="%"
+                  />
+
+
+                  <Tooltip
+                    contentStyle={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E3E8EE',
+                      borderRadius: '10px',
+                      boxShadow:
+                        '0 8px 25px rgba(15, 23, 42, 0.10)'
+                    }}
+
+                    labelStyle={{
+                      color: '#0F172A',
+                      fontWeight: 700
+                    }}
+
+                    itemStyle={{
+                      color: '#334155'
+                    }}
+
+                    formatter={(value) => [
+                      `${Number(
+                        value
+                      ).toFixed(2)}%`,
+                      'Predicted Future Attendance'
+                    ]}
+
+                    labelFormatter={(label) =>
+                      `${label} classes missed`
+                    }
+
+                  />
+
+
+                  <ReferenceLine
+                    y={75}
+                    stroke="#10B981"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: '75% Cutoff',
+                      fill: '#059669',
+                      fontSize: 10
+                    }}
+                  />
+
+
+                  <ReferenceLine
+                    y={65}
+                    stroke="#EF4444"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: '65% Critical',
+                      fill: '#DC2626',
+                      fontSize: 10
+                    }}
+                  />
+
+
+                  <Area
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke="#0EA5E9"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#leaveImpactGrad)"
+                  />
+
+                </AreaChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+          ) : (
+
+            <div className="chart-no-data">
+
+              <TrendingDown size={22} />
+
+              <div>
+
+                <strong>
+                  Leave trajectory not available
+                </strong>
+
+                <p>
+                  Open the Leave Simulator to
+                  generate the leave impact data.
+                </p>
+
+              </div>
+
+            </div>
+
+          )}
 
         </div>
 
       </div>
 
-      {/* =====================================================
+
+      {/* =================================================
           SUBJECT BREAKDOWN
-      ===================================================== */}
+      ================================================= */}
 
       <div className="glass-card subjects-section">
 
@@ -763,11 +990,13 @@ export default function DashboardView({
 
           </div>
 
+
           <span className="badge badge-neutral">
             Rule-Based Analysis
           </span>
 
         </div>
+
 
         <div className="table-responsive">
 
@@ -786,68 +1015,90 @@ export default function DashboardView({
 
             </thead>
 
+
             <tbody>
 
-              {subject_breakdown.map((sub, idx) => (
+              {subject_breakdown.length > 0 ? (
 
-                <tr key={idx}>
+                subject_breakdown.map(
+                  (sub, idx) => (
 
-                  <td className="font-semibold">
-                    {sub.name}
-                  </td>
+                    <tr key={idx}>
 
-                  <td>
-                    {sub.conducted}
-                  </td>
+                      <td className="font-semibold">
+                        {sub.name}
+                      </td>
 
-                  <td>
-                    {sub.attended}
-                  </td>
+                      <td>
+                        {sub.conducted}
+                      </td>
 
-                  <td className="text-rose">
-                    {sub.missed}
-                  </td>
+                      <td>
+                        {sub.attended}
+                      </td>
 
-                  <td className="font-mono">
-                    {sub.percentage}%
-                  </td>
+                      <td className="text-rose">
+                        {sub.missed}
+                      </td>
 
-                  <td>
+                      <td className="font-mono">
+                        {sub.percentage}%
+                      </td>
 
-                    {sub.status === 'Safe' ? (
+                      <td>
 
-                      <span className="badge badge-safe">
-                        <ShieldCheck size={13} />
-                        Safe
-                      </span>
+                        {sub.status === 'Safe' ? (
 
-                    ) : sub.status === 'At Risk' ? (
+                          <span className="badge badge-safe">
+                            <ShieldCheck size={13} />
+                            Safe
+                          </span>
 
-                      <span className="badge badge-risk">
-                        <AlertTriangle size={13} />
-                        At Risk
-                      </span>
+                        ) : sub.status === 'At Risk' ? (
 
-                    ) : (
+                          <span className="badge badge-risk">
+                            <AlertTriangle size={13} />
+                            At Risk
+                          </span>
 
-                      <span className="badge badge-high-risk">
-                        <AlertOctagon size={13} />
-                        High Risk
-                      </span>
+                        ) : (
 
-                    )}
+                          <span className="badge badge-high-risk">
+                            <AlertOctagon size={13} />
+                            High Risk
+                          </span>
 
+                        )}
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )
+
+              ) : (
+
+                <tr>
+
+                  <td
+                    colSpan="6"
+                    className="empty-table-cell"
+                  >
+                    No subject attendance
+                    data available.
                   </td>
 
                 </tr>
 
-              ))}
+              )}
 
             </tbody>
 
           </table>
 
         </div>
+
 
         <div className="subject-note">
 
@@ -857,25 +1108,29 @@ export default function DashboardView({
           />
 
           <span>
-            Subject-level status is a supporting rule-based
-            feature for classroom guidance. It is distinct
-            from the overall ML prediction model.
+            Subject-level status is a supporting
+            rule-based feature for classroom
+            guidance. It is distinct from the
+            overall ML prediction model.
           </span>
 
         </div>
 
       </div>
 
-      {/* =====================================================
+
+      {/* =================================================
           FEATURE ENGINEERING
-      ===================================================== */}
+      ================================================= */}
 
       <div className="glass-card feature-engineering-card">
 
         <div
           className="feature-accordion-header"
           onClick={() =>
-            setShowFeatures(!showFeatures)
+            setShowFeatures(
+              !showFeatures
+            )
           }
         >
 
@@ -892,13 +1147,14 @@ export default function DashboardView({
               </h4>
 
               <p className="feature-subheading">
-                View the 11 statistical parameters
-                passed to the Random Forest model
+                View the statistical parameters
+                generated from attendance data
               </p>
 
             </div>
 
           </div>
+
 
           <button
             type="button"
@@ -908,6 +1164,13 @@ export default function DashboardView({
                 ? 'Collapse features'
                 : 'Expand features'
             }
+            onClick={(e) => {
+              e.stopPropagation();
+
+              setShowFeatures(
+                !showFeatures
+              );
+            }}
           >
 
             {showFeatures ? (
@@ -920,15 +1183,18 @@ export default function DashboardView({
 
         </div>
 
+
         {showFeatures && (
 
           <div className="features-content animate-fade-in">
 
             <p className="features-intro">
-              The student does not manually enter complex
-              statistics. The system automatically engineers
-              these parameters from the dynamic subject table.
+              The student does not manually enter
+              complex statistics. The system automatically
+              engineers these parameters from the dynamic
+              subject table.
             </p>
+
 
             <div className="features-grid-display">
 
@@ -942,6 +1208,7 @@ export default function DashboardView({
                 </span>
               </div>
 
+
               <div className="feature-metric">
                 <span className="feature-name">
                   Current Total Classes Conducted
@@ -951,6 +1218,7 @@ export default function DashboardView({
                   {feature_summary.totalConducted}
                 </span>
               </div>
+
 
               <div className="feature-metric">
                 <span className="feature-name">
@@ -962,6 +1230,7 @@ export default function DashboardView({
                 </span>
               </div>
 
+
               <div className="feature-metric">
                 <span className="feature-name">
                   Current Total Classes Missed
@@ -971,6 +1240,7 @@ export default function DashboardView({
                   {feature_summary.totalMissed}
                 </span>
               </div>
+
 
               <div className="feature-metric">
                 <span className="feature-name">
@@ -982,6 +1252,7 @@ export default function DashboardView({
                 </span>
               </div>
 
+
               <div className="feature-metric">
                 <span className="feature-name">
                   Minimum Subject Attendance
@@ -991,6 +1262,7 @@ export default function DashboardView({
                   {feature_summary.minSubjectAttendance}%
                 </span>
               </div>
+
 
               <div className="feature-metric">
                 <span className="feature-name">
@@ -1002,6 +1274,7 @@ export default function DashboardView({
                 </span>
               </div>
 
+
               <div className="feature-metric">
                 <span className="feature-name">
                   Subject Attendance Standard Deviation
@@ -1011,6 +1284,7 @@ export default function DashboardView({
                   {feature_summary.stdSubjectAttendance}
                 </span>
               </div>
+
 
               <div className="feature-metric">
                 <span className="feature-name">
@@ -1022,6 +1296,7 @@ export default function DashboardView({
                 </span>
               </div>
 
+
               <div className="feature-metric">
                 <span className="feature-name">
                   Subjects Below 65%
@@ -1031,6 +1306,7 @@ export default function DashboardView({
                   {feature_summary.subjectsBelow65}
                 </span>
               </div>
+
 
               <div className="feature-metric">
                 <span className="feature-name">
@@ -1050,15 +1326,12 @@ export default function DashboardView({
 
       </div>
 
-      {/* =====================================================
+
+      {/* =================================================
           STYLES
-      ===================================================== */}
+      ================================================= */}
 
       <style>{`
-
-        /* =========================================
-           DASHBOARD
-        ========================================= */
 
         .dashboard-container {
           width: 100%;
@@ -1070,10 +1343,6 @@ export default function DashboardView({
           padding: 1.5rem 1.25rem 3rem;
         }
 
-        /* =========================================
-           EMPTY STATE
-        ========================================= */
-
         .dashboard-empty {
           max-width: 650px;
           margin: 3rem auto;
@@ -1082,12 +1351,12 @@ export default function DashboardView({
         }
 
         .dashboard-empty h3 {
-          margin-top: 0.85rem;
+          margin-top: .85rem;
           color: #0F172A;
         }
 
         .dashboard-empty p {
-          margin: 0.5rem 0 0;
+          margin: .5rem 0 0;
           color: #64748B;
         }
 
@@ -1107,10 +1376,6 @@ export default function DashboardView({
           color: #0F172A;
         }
 
-        /* =========================================
-           HEADER
-        ========================================= */
-
         .dashboard-header {
           display: flex;
           align-items: flex-end;
@@ -1121,13 +1386,13 @@ export default function DashboardView({
         .dashboard-kicker {
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          margin-bottom: 0.25rem;
+          gap: .4rem;
+          margin-bottom: .25rem;
           color: #64748B;
-          font-size: 0.7rem;
+          font-size: .7rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: .08em;
         }
 
         .dashboard-kicker-dot {
@@ -1142,30 +1407,26 @@ export default function DashboardView({
           color: #0F172A;
           font-size: 1.55rem;
           font-weight: 800;
-          letter-spacing: -0.02em;
+          letter-spacing: -.02em;
         }
 
         .dashboard-subtitle {
-          margin: 0.3rem 0 0;
+          margin: .3rem 0 0;
           color: #64748B;
-          font-size: 0.82rem;
+          font-size: .82rem;
         }
 
         .dashboard-actions {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
+          gap: .6rem;
         }
-
-        /* =========================================
-           KPI GRID
-        ========================================= */
 
         .kpi-grid {
           display: grid;
           grid-template-columns:
             repeat(5, minmax(0, 1fr));
-          gap: 0.9rem;
+          gap: .9rem;
         }
 
         .kpi-card {
@@ -1173,7 +1434,7 @@ export default function DashboardView({
           min-height: 174px;
           display: flex;
           flex-direction: column;
-          gap: 0.55rem;
+          gap: .55rem;
           padding: 1.1rem;
           background: #FFFFFF;
         }
@@ -1212,45 +1473,44 @@ export default function DashboardView({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.5rem;
+          gap: .5rem;
         }
 
         .kpi-title {
-          font-size: 0.73rem;
+          font-size: .73rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: .04em;
           color: #64748B;
+        }
+
+        .kpi-chip,
+        .forecast-chip {
+          flex-shrink: 0;
+          font-size: .64rem;
+          font-weight: 600;
+          padding: .2rem .42rem;
+          border-radius: 6px;
         }
 
         .kpi-chip {
-          flex-shrink: 0;
-          font-size: 0.64rem;
-          font-weight: 600;
           color: #64748B;
           background: #F1F5F9;
           border: 1px solid #E2E8F0;
-          padding: 0.2rem 0.42rem;
-          border-radius: 6px;
         }
 
         .forecast-chip {
-          flex-shrink: 0;
-          font-size: 0.64rem;
-          font-weight: 700;
           color: #0369A1;
           background: #EAF8FC;
           border: 1px solid #BAE6F3;
-          padding: 0.2rem 0.42rem;
-          border-radius: 6px;
         }
 
         .kpi-value-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.5rem;
-          margin-top: 0.2rem;
+          gap: .5rem;
+          margin-top: .2rem;
         }
 
         .kpi-number {
@@ -1282,8 +1542,8 @@ export default function DashboardView({
         }
 
         .classes-label {
-          margin-left: 0.2rem;
-          font-size: 0.85rem;
+          margin-left: .2rem;
+          font-size: .85rem;
           font-weight: 600;
           color: #64748B;
         }
@@ -1303,17 +1563,13 @@ export default function DashboardView({
           border: 1px solid #BAE6F3;
         }
 
-        /* =========================================
-           PROGRESS
-        ========================================= */
-
         .progress-bar-track {
           width: 100%;
           height: 6px;
           background: #E8EDF2;
           border-radius: 5px;
           overflow: hidden;
-          margin-top: 0.25rem;
+          margin-top: .25rem;
         }
 
         .progress-bar-fill {
@@ -1334,7 +1590,7 @@ export default function DashboardView({
         }
 
         .kpi-delta {
-          font-size: 0.75rem;
+          font-size: .75rem;
           font-weight: 700;
         }
 
@@ -1350,39 +1606,35 @@ export default function DashboardView({
           display: inline-flex;
           align-items: center;
           width: fit-content;
-          gap: 0.35rem;
-          font-size: 0.65rem;
+          gap: .35rem;
+          font-size: .65rem;
           font-weight: 600;
           color: #9A3412;
           background: #FFF1EB;
-          padding: 0.22rem 0.48rem;
+          padding: .22rem .48rem;
           border-radius: 6px;
           border: 1px solid #F5D5C7;
         }
 
         .risk-rule-explanation {
-          font-size: 0.71rem;
+          font-size: .71rem;
           color: #64748B;
           line-height: 1.4;
         }
 
         .safe-leave-text {
           margin: 0;
-          font-size: 0.76rem;
+          font-size: .76rem;
           color: #334155;
           line-height: 1.4;
         }
 
         .kpi-caption {
-          font-size: 0.66rem;
+          font-size: .66rem;
           color: #94A3B8;
           margin-top: auto;
           line-height: 1.35;
         }
-
-        /* =========================================
-           CHARTS
-        ========================================= */
 
         .charts-grid {
           display: grid;
@@ -1395,7 +1647,7 @@ export default function DashboardView({
           min-width: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.9rem;
+          gap: .9rem;
           padding: 1.2rem;
           background: #FFFFFF;
         }
@@ -1405,7 +1657,7 @@ export default function DashboardView({
           align-items: flex-start;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 0.7rem;
+          gap: .7rem;
         }
 
         .chart-title {
@@ -1416,8 +1668,8 @@ export default function DashboardView({
         }
 
         .chart-desc {
-          margin: 0.25rem 0 0;
-          font-size: 0.76rem;
+          margin: .25rem 0 0;
+          font-size: .76rem;
           color: #64748B;
           line-height: 1.4;
         }
@@ -1427,9 +1679,31 @@ export default function DashboardView({
           min-width: 0;
         }
 
-        /* =========================================
-           SUBJECTS
-        ========================================= */
+        .chart-no-data {
+          min-height: 260px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: .8rem;
+          color: #64748B;
+          text-align: left;
+        }
+
+        .chart-no-data svg {
+          color: #0284C7;
+          flex-shrink: 0;
+        }
+
+        .chart-no-data strong {
+          display: block;
+          color: #0F172A;
+          margin-bottom: .2rem;
+        }
+
+        .chart-no-data p {
+          margin: 0;
+          font-size: .78rem;
+        }
 
         .subjects-section {
           display: flex;
@@ -1444,7 +1718,7 @@ export default function DashboardView({
           align-items: flex-start;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 0.75rem;
+          gap: .75rem;
         }
 
         .section-title-sm {
@@ -1455,36 +1729,42 @@ export default function DashboardView({
         }
 
         .section-subtitle-sm {
-          margin: 0.25rem 0 0;
-          font-size: 0.76rem;
+          margin: .25rem 0 0;
+          font-size: .76rem;
           color: #64748B;
         }
 
         .subject-breakdown-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 0.84rem;
+          font-size: .84rem;
         }
 
         .subject-breakdown-table th {
           text-align: left;
-          padding: 0.7rem 0.55rem;
-          font-size: 0.7rem;
+          padding: .7rem .55rem;
+          font-size: .7rem;
           color: #64748B;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: .04em;
           background: #F8FAFC;
           border-bottom: 1px solid #E3E8EE;
         }
 
         .subject-breakdown-table td {
-          padding: 0.7rem 0.55rem;
+          padding: .7rem .55rem;
           color: #334155;
           border-bottom: 1px solid #EEF2F6;
         }
 
         .subject-breakdown-table tbody tr:hover td {
           background: #FBFDFF;
+        }
+
+        .empty-table-cell {
+          text-align: center;
+          color: #94A3B8 !important;
+          padding: 1.5rem !important;
         }
 
         .font-semibold {
@@ -1499,12 +1779,12 @@ export default function DashboardView({
         .subject-note {
           display: flex;
           align-items: flex-start;
-          gap: 0.5rem;
-          font-size: 0.73rem;
+          gap: .5rem;
+          font-size: .73rem;
           color: #64748B;
           background: #F8FAFC;
           border: 1px dashed #CBD5E1;
-          padding: 0.65rem 0.8rem;
+          padding: .65rem .8rem;
           border-radius: 8px;
           line-height: 1.45;
         }
@@ -1514,10 +1794,6 @@ export default function DashboardView({
           flex-shrink: 0;
           margin-top: 1px;
         }
-
-        /* =========================================
-           FEATURE ENGINEERING
-        ========================================= */
 
         .feature-engineering-card {
           padding: 1rem 1.2rem;
@@ -1535,7 +1811,7 @@ export default function DashboardView({
         .feature-header-left {
           display: flex;
           align-items: center;
-          gap: 0.7rem;
+          gap: .7rem;
           min-width: 0;
         }
 
@@ -1555,13 +1831,13 @@ export default function DashboardView({
         .feature-heading {
           margin: 0;
           color: #0F172A;
-          font-size: 0.92rem;
+          font-size: .92rem;
           font-weight: 700;
         }
 
         .feature-subheading {
-          margin: 0.2rem 0 0;
-          font-size: 0.72rem;
+          margin: .2rem 0 0;
+          font-size: .72rem;
           color: #64748B;
         }
 
@@ -1569,14 +1845,14 @@ export default function DashboardView({
           flex-shrink: 0;
           background: #FFFFFF;
           color: #64748B;
-          padding: 0.4rem;
+          padding: .4rem;
           display: flex;
           align-items: center;
           justify-content: center;
           border: 1px solid #E3E8EE;
           border-radius: 7px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all .2s ease;
         }
 
         .btn-icon:hover {
@@ -1592,8 +1868,8 @@ export default function DashboardView({
         }
 
         .features-intro {
-          margin: 0 0 0.9rem;
-          font-size: 0.76rem;
+          margin: 0 0 .9rem;
+          font-size: .76rem;
           color: #64748B;
           line-height: 1.5;
         }
@@ -1602,7 +1878,7 @@ export default function DashboardView({
           display: grid;
           grid-template-columns:
             repeat(4, minmax(0, 1fr));
-          gap: 0.65rem;
+          gap: .65rem;
         }
 
         .feature-metric {
@@ -1612,40 +1888,28 @@ export default function DashboardView({
               #F8FAFC,
               #F3FAFC
             );
-
           border: 1px solid #E3E8EE;
-
           border-radius: 8px;
-
-          padding:
-            0.6rem 0.7rem;
-
+          padding: .6rem .7rem;
           display: flex;
-
           flex-direction: column;
-
-          gap: 0.15rem;
-
+          gap: .15rem;
           min-width: 0;
         }
 
         .feature-name {
           font-family: var(--font-mono);
-          font-size: 0.64rem;
+          font-size: .64rem;
           color: #64748B;
           overflow-wrap: anywhere;
         }
 
         .feature-val {
           font-family: var(--font-mono);
-          font-size: 0.9rem;
+          font-size: .9rem;
           font-weight: 750;
           color: #0F172A;
         }
-
-        /* =========================================
-           RESPONSIVE
-        ========================================= */
 
         @media (max-width: 1250px) {
 
@@ -1693,7 +1957,6 @@ export default function DashboardView({
           .dashboard-container {
             padding:
               1.15rem 1rem 3rem;
-
             gap: 1rem;
           }
 
@@ -1702,7 +1965,7 @@ export default function DashboardView({
           }
 
           .dashboard-subtitle {
-            font-size: 0.75rem;
+            font-size: .75rem;
           }
 
           .dashboard-actions {
@@ -1723,7 +1986,7 @@ export default function DashboardView({
 
           .chart-card {
             padding:
-              1rem 0.75rem;
+              1rem .75rem;
           }
 
           .charts-grid {
@@ -1732,7 +1995,7 @@ export default function DashboardView({
 
           .subjects-section {
             padding:
-              1rem 0.75rem;
+              1rem .75rem;
           }
 
           .subject-breakdown-table {
@@ -1745,7 +2008,7 @@ export default function DashboardView({
           }
 
           .feature-engineering-card {
-            padding: 0.9rem;
+            padding: .9rem;
           }
 
         }
